@@ -1,0 +1,112 @@
+---
+title: "Installing R and RStudio"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+# Installing R and RStudio
+
+For this course you'll need to download and install `R` and RStudio---all assignments will be using `R`, including the homeworks, graphics discussions, and project report.
+
+To download `R`, follow the instructions [here](https://cran.rstudio.com/). Be sure to choose the correct operating system, and 64-bit R if possible/compatible.
+
+After you've installed `R`, install RStudio by following the instructions [here](https://rstudio.com/products/rstudio/download/#download).
+
+If you run into any issues with installing `R` or RStudio and/or opening RStudio on your computer, please post on Piazza describing the issue you're running into, and we'll do our best to help you ASAP.
+
+Once you get RStudio open, download the Demo0.Rmd file from Canvas and open it in RStudio (File / Open...). When you open the .Rmd file, you'll notice several panes in RStudio. The most important pane is where the actual .Rmd file is (i.e., where this text is within RStudio), because this is where you'll type your answers to construct the final .Rmd and HTML file that you'll submit for homeworks.
+
+To get some practice writing text in the .Rmd file, scroll to the top of the .Rmd file where it says "Your Name Here". Replace "Your Name Here" with your name (**you should do this for all assignments**). After you've done this, look for the "Knit" button near the top of RStudio. Click the down-arrow there and click "Knit to HTML". This should generate an .html file with your name at the top. (This .html should be in the same place on your computer where your .Rmd file is) After you click the "Knit to HTML" button once, you can just click the "Knit" button itself to keep updating the .html file; you can also use Cmd+Shift+K (Mac) or Ctrl+Shift+K (Windows/Linux).
+
+**Continue to the next part only after you've successfully changed the "Your Name Here" text and Knitted the .Rmd file to HTML.**
+
+# Installing Packages and Loading Libraries
+
+After you've downloaded `R` and RStudio, there's already plenty of functions that you can use. For example, the following code produces 5 random draws from a standard Normal distribution (i.e., the distribution N(0,1)) and prints out the mean of those draws:
+
+```{r}
+draws <- rnorm(5)
+mean(draws)
+```
+
+Check the .Rmd file to see how I included `R` code within the .Rmd file.
+
+There are some functions that aren't automatically available in `R` but can quickly be made available by loading packages In `R`, packages are basically collections of functions. There are many packages automatically available in `R`; for example, the following code uses the `library()` function to load the `MASS` package:
+
+```{r}
+library(MASS)
+```
+
+Unfortunately, there are many `R` packages that are not currently installed on your computer. For instance, throughout the class we'll extensively use the [`tidyverse`](https://www.tidyverse.org/) suite of packages - which includes the popular data visualization package `ggplot2`. Try running the following line of code at the command line / Console in RStudio (__NOT in the .Rmd file__):
+
+`install.packages("tidyverse")`
+
+For many of you, this should work with no errors; for those of you who do get an error, we provide further instructions below that may help. If you are able to successfully install the `tidyverse` library, the following line of code should run within the .Rmd file (just delete the hastag # and then try to Knit your .Rmd file):
+
+```{r}
+# library(tidyverse)
+```
+
+**Important Note**: NEVER install new packages in a code block in an .Rmd file. Always install new packages at the command line / Console. That is, the `install.packages()` function should NEVER be in your submitted code. The `library()` function, however, should be in most of your submitted code: The `library()` function loads packages only after they are installed.
+
+If you're able to successfully run the above line of code, __you can skip__ to the "Posting to Gradescope" section. If you were NOT able to successfully install the `tidyverse` using the `install.packages()` function, then skip ahead to the section "Further Steps for Installing Packages".
+
+
+# Posting to Gradescope
+
+If you were able to successfully knit your .Rmd file with the `tidyverse` library loaded, you're ready to submit Demo0 to Gradescope! There's just one more caveat: __Gradescope only accepts PDFs and not HTML files__. So, take a moment to convert your HTML file to PDF by visiting an online file converter like https://html2pdf.com/, and then submit the resulting PDF to Gradescope. Alternatively, you can get RStudio to "Knit to PDF", but you need to install LaTeX on your computer to do this, which isn't required for the course, but it is slightly more convenient than using an online file converter. [See here](https://www.latex-project.org/get/) for installing LaTeX on your computer, if you're interested. (More generally, LaTeX is a popular software to display mathematical equations on computers; LaTeX is pronounced "lah-teck" or "lay-teck".)
+
+**For ALL assignments, after you make a PDF, always make sure that your code, graphs, and answers are displayed on your PDF before submitting it to Gradescope.**
+
+**Note that your HTML file is in the same place where your .Rmd file is. So, look for where you downloaded this .Rmd file on your computer.**
+
+All of the following material is just "bonus material" for those curious about how to format RStudio and RMarkdown files.
+
+# OPTIONAL: Further Steps for Installing Packages
+
+__Remember, this section only applies to you if you were unable to install and load the `tidyverse` in the previous section__.
+
+In some cases (e.g., if you're using one of the CMU cluster computers), the package may not install. This happens because CMU does not allow us to install new packages to the default location. As a result, we have to specify a new directory where we can install new `R` packages.
+
+**If the `tidyverse` package installed with no issues, you can skip the following parts.** If you could not install the package, take the following steps:
+
+
+a. Create a new directory (i.e., folder) on your computer called "36-613", and create a new sub-directory called "packages". The filepath to this directory should be something like:
+
++ "C:/Users/YourName/Desktop/36-613/packages" if you use Windows
++ "/Users/YourName/Desktop/36-613/packages" if you use Mac
++ "..." if you are using the CMU cluster computers
+
+b. In a code block, store the filepath in an object called `package_path`, e.g. `package_path <- "/Users/YourName/Desktop/36-613/packages"`. Repeat this at the command line / Console as well.
+
+c. In the same code block, include the following line of code: `.libPaths(c(package_path, .libPaths()))`
+
+d. At the command line / Console (NOT in a code block), type `install.packages("tidyverse", lib = package_path)`. This should install the `tidyverse` package.
+
+e. If you successfully installed the `tidyverse` library, try running the `library(tidyverse)` code now. If you still run into any issues, please post to Piazza describing your issue and we will help you.
+
+# OPTIONAL: Formating Text within RStudio
+
+There are a lot of ways to format text within RStudio, e.g., *italics* and **bold** (just look at the .Rmd file to see how I did this). [See here](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf) for more tips/tricks on how to format things in R Markdown. As you'll see throughout this class (and especially your project at the end of the semester), well-formatted .html files can be a great way to showcase data science results to the public online.
+
+# OPTIONAL: Customizing the RStudio User Interface
+
+Within RStudio there are several panes that contain various things (Console, Help, Environment, History, Plots, etc). Here we discuss how you can customize how these panes are displayed.
+
+If you're using Mac, go to RStudio / Preferences / Pane Layout. If you're using Windows, go to Tools / Global Options. Change the menu options to arrange the panes as you see fit. Click Apply and OK.
+
+Now (still within the RStudio / Preferences menu), click Appearance and choose an appropriate font, font size, and theme. Click Apply and OK. Minimizing the bottom-left and bottom-right panes is a nice trick, which gives more vertical space to see your code and the output it's generating. (Minimize/maximize buttons are in the top-right of each pane.)
+
+# OPTIONAL: Additional Customization Advice
+
++ Under Preferences / Code / Display, you might consider adding the margin column and setting it to 80 characters, since most style guides suggest that you should keep lines of code at 80 characters or less when possible.
++ You can set your background color, font, font size, etc. under Preferences / Appearance. (I use Cobalt). "Dark displays" are often easier on the eyes and are environmentally-friendly in that they conserve energy on devices. Of course, this is strictly a personal preference, and people can get unnecessarily dogmatic about it, so you should just choose something that you like.
++ Under Preferences / Packages, you can opt to change your CRAN mirror to the "Global (CDN) - RStudio" option, as it is very reliable.
++ Under Preferences / Git / SVN, you can configure your version control preferences. People often recommend using Git with RStudio for version control purposes. The interface is easy to use even if you're a beginner programmer or Git user. [This link](https://support.rstudio.com/hc/en-us/articles/200532077-Version-Control-with-Git-and-SVN) and [this link](https://jennybc.github.io/2014-05-12-ubc/ubc-r/session03_git.html) have more information on this, if you're interested.
+
+# OPTIONAL: `R` Primers on RStudio Cloud
+
+If you are struggling to install `R` and Rstudio on your computer, and/or having difficulties with installing the `tidyverse` then you __should make a free RStudio Cloud account at [`https://rstudio.cloud/`](https://rstudio.cloud/).__ This is a free, browser-based version of `R` and RStudio that also provides access to a growing number of `R` tutorials / primers relevant to this course. 
+
+After you create a RStudio Cloud account, click on the navigation menu by "Your Workspace". Then click on ["Primers"](https://rstudio.cloud/learn/primers) to bring up a menu of tutorials, with code primers you can choose to work through. RStudio Cloud is a great practical alternative to use __in case we are unable to resolve errors with regards to installation on your own personal computer__ (an unlikely scenario). We strongly encourage you to use an installed version of `R` and RStudio throughout the course, due to RStudio Cloud data limitations that are important for your projects at the end of the semester.
+

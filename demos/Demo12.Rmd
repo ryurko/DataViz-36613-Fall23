@@ -1,0 +1,213 @@
+---
+title: "Modifying Colors and Themes"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+
+###  The graphs below don't have proper titles, axis labels, legends, etc.  Please take care to do this on your own graphs.
+
+Throughout this demo we will once again use the [`palmerpenguins` dataset](https://allisonhorst.github.io/palmerpenguins/articles/intro.html). To access the data, you will need to install the `palmerpenguins` package:
+
+```{r, eval = FALSE}
+install.packages("palmerpenguins")
+```
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+data(penguins)
+```
+
+
+## Notes on colors in plots
+
+Three types of color scales to work with:
+
+1. __Qualitative__: distinguishing discrete items that don't have an order (nominal categorical). Colors should be distinct and equal with none standing out unless otherwise desired for emphasis.
+
++ Do __NOT__ use a discrete scale on a continuous variable
+
+2. __Sequential__:  when data values are mapped to one shade, e.g., in a choropleth, for an ordered categorical variable or low to high continuous variable
+
++ Do __NOT__ use a sequential scale on an unordered variable
+
+3. __Divergent__: think of it as two sequential scales with a natural midpoint
+midpoint could represent 0 (assuming +/- values) or 50% if your data spans the full scale
+
++ Do __NOT__ use a divergent scale on data without natural midpoint
+
+
+### Options for `ggplot2` colors
+
+The default color scheme is pretty bad to put it bluntly, but `ggplot2` has ColorBrewer built in which makes it easy to customize your color scales. For instance, we change the palette for the species plot from before.
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+```
+
+Something you should keep in mind is to pick a [color-blind friendly palette](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/). One simple way to do this is by using the `ggthemes` package which has color-blind friendly palettes included:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+```
+
+In terms of displaying color from low to high, the [viridis scales](https://ggplot2.tidyverse.org/reference/scale_viridis.html) are excellent choices (and are also color-blind friendly!).
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, 
+             color = flipper_length_mm)) +
+  geom_point(alpha = 0.5, size = 2) +
+  scale_color_viridis_c() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)",
+       color = "Flipper Length (mm)") +
+  theme_bw()
+```
+
+
+## Notes on themes
+
+We have not explicitly talked about this throughout the semester, but you have seen various changes to the `theme` of plots for customization. __You will constantly be changing the theme of your plots to optimize the display.__ Fortunately, there are a number of built-in themes you can use to start with rather than the default `theme_gray()`:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_gray()
+```
+
+For instance, you have seen me use `theme_bw()` many times throughout the semester:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+```
+
+There are options such as `theme_minimal()`:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_minimal()
+```
+
+
+or `theme_classic()`:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_classic()
+```
+
+
+There are also packages with popular, such as the `ggthemes` package which includes, for example, `theme_economist()`:
+
+```{r}
+library(ggthemes)
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_economist()
+```
+
+and `theme_fivethirtyeight()` to name a couple:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_fivethirtyeight()
+```
+
+With any theme you have picked, you can then modify specific components directly using the `theme()` layer. There are [many aspects of the plot's theme to modify](https://ggplot2.tidyverse.org/reference/theme.html), such as my decision to move the legend to the bottom of the figure, drop the legend title, and increase the font size for the y-axis:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)",
+       title = "Larger penguins tend to have larger bills",
+       subtitle = "Positive relationship between mass and length is consistent across species") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 6))
+```
+
+
+If you're tired of explicitly customizing every plot in the same way all the time, then you should make a custom theme. It's quite easy to make a custom theme for `ggplot2` and of course [there are an incredible number of ways to customize your theme](https://themockup.blog/posts/2020-12-26-creating-and-using-custom-ggplot2-themes/). In the code chunk, I modify the `theme_bw()` theme using the `%+replace%` argument to make my new theme named `my_theme()` - which is stored as a function:
+
+```{r}
+my_theme <- function () {
+  # Start with the base font size
+  theme_bw(base_size = 10) %+replace%
+    theme(
+      panel.background  = element_blank(),
+      plot.background = element_rect(fill = "transparent", color = NA), 
+      legend.position = "bottom",
+      legend.background = element_rect(fill = "transparent", color = NA),
+      legend.key = element_rect(fill = "transparent", color = NA),
+      axis.ticks = element_blank(),
+      panel.grid.major = element_line(color = "grey90", size = 0.3), 
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(size = 18, 
+                                hjust = 0, vjust = 0.5, 
+                                face = "bold", 
+                                margin = margin(b = 0.2, unit = "cm")),
+      plot.subtitle = element_text(size = 12, hjust = 0, 
+                                   vjust = 0.5, 
+                                   margin = margin(b = 0.2, unit = "cm")),
+      plot.caption = element_text(size = 7, hjust = 1,
+                                  face = "italic", 
+                                  margin = margin(t = 0.1, unit = "cm")),
+      axis.text.x = element_text(size = 13),
+      axis.text.y = element_text(size = 13)
+    )
+}
+```
+
+
+Now I can go ahead and my plot from before with this theme:
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)",
+       title = "Larger penguins tend to have larger bills",
+       subtitle = "Positive relationship between mass and length is consistent across species") +
+  my_theme()
+```
+
+

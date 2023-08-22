@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## More 2D Quant. and Intro to High Dimensional Data
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 9/21/2022
+]
+
+---
+
+
+
+
+
+
+
+
+
+
+## 2D quantitative data
+
+- We're working with two variables: `\((X, Y) \in \mathbb{R}^2\)`, i.e., dataset with `\(n\)` rows and 2 columns
+
+- Goals:
+
+  - describing the relationships between two variables
+  
+  - describing the conditional distribution `\(Y | X\)` via regression analysis
+  
+  - __TODAY: describing the joint distribution `\(X,Y\)` via contours, heatmaps, etc.__
+
+- Few big picture ideas to keep in mind:
+
+  - scatterplots are by far the most common visual
+  
+  - regression analysis is by far the most popular analysis (you have a whole class on this...)
+  
+  - relationships may vary across other variables, e.g., categorical variables
+  
+---
+
+## Visuals to focus on the joint distribution
+
+
+
+.pull-left[
+
+- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+* coord_fixed() +
+  theme_bw()
+```
+
+- Where are the high/low concentrations of X,Y?
+
+- How do we display concentration for 2D data?
+
+- `coord_fixed()` so axes match with unit scales
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-3-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Going from 1D to 2D density estimation
+
+In 1D: estimate density `\(f(x)\)`, assuming that `\(f(x)\)` is _smooth_:
+
+$$
+\hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
+$$
+
+--
+
+In 2D: estimate joint density `\(f(x_1, x_2)\)`
+
+`$$\hat{f}(x_1, x_2) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h_1h_2} K(\frac{x_1 - x_{i1}}{h_1}) K(\frac{x_2 - x_{i2}}{h_2})$$`
+
+--
+
+In 1D there was one bandwidth, now __we have two bandwidths__
+
+  - `\(h_1\)`: controls smoothness as `\(X_1\)` changes, holding `\(X_2\)` fixed
+  - `\(h_2\)`: controls smoothness as `\(X_2\)` changes, holding `\(X_1\)` fixed
+
+Again Gaussian kernels are the most popular...
+
+---
+
+## So how do we display densities for 2D data?
+
+&lt;img src="https://www.byclb.com/TR/Tutorials/neural_networks/Ch_4_dosyalar/image044.gif" width="60%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## How to read contour plots?
+
+Best known in topology: outlines (contours) denote levels of elevation
+
+&lt;img src="https://preview.redd.it/2rbe8s8t7re31.jpg?auto=webp&amp;s=eed849b180dd803d394f556432df026c4cd1dae2" width="60%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+* geom_density2d() +
+  coord_fixed() +
+  theme_bw()
+```
+
+- Use `geom_density2d` to display contour lines
+
+- Inner lines denote "peaks"
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-6-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* stat_density2d(aes(fill = after_stat(level)),
+*                geom = "polygon") +
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+* scale_fill_gradient(low = "darkblue",
+*                     high = "darkorange") +
+  theme_bw()
+```
+
+- Use `stat_density2d` for additional features
+
+- May be easier to read than nested lines with color
+
+- __Default color scale is awful!__ Always change it!
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-7-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Visualizing grid heat maps
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* stat_density2d(aes(fill = after_stat(density)),
+*                geom = "tile",
+*                contour = FALSE) +
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+* scale_fill_gradient(low = "white",
+*                     high = "red") +
+  theme_bw()
+```
+
+- Divide the space into a grid and color the grid according to high/low values
+
+- Common to treat "white" as empty color
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-8-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Alternative idea: hexagonal binning
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* geom_hex() +
+  coord_fixed() +
+  scale_fill_gradient(low = "darkblue", 
+                      high = "darkorange") + 
+  theme_bw()
+```
+
+- Can specify `binwidth` in both directions
+
+- 2D version of histogram 
+
+- _Need to install `hexbin` package_
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-9-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Back to the penguins...
+
+Pretend I give you this `penguins` dataset and I ask you to make a plot __for every pairwise comparison__...
+
+
+```r
+library(palmerpenguins)
+penguins %&gt;% slice(1:3)
+```
+
+```
+## # A tibble: 3 × 8
+##   species island    bill_length_mm bill_depth_mm flipper_l…¹ body_…² sex    year
+##   &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;       &lt;int&gt;   &lt;int&gt; &lt;fct&gt; &lt;int&gt;
+## 1 Adelie  Torgersen           39.1          18.7         181    3750 male   2007
+## 2 Adelie  Torgersen           39.5          17.4         186    3800 fema…  2007
+## 3 Adelie  Torgersen           40.3          18           195    3250 fema…  2007
+## # … with abbreviated variable names ¹​flipper_length_mm, ²​body_mass_g
+```
+
+--
+
+We can create a __pairs plot__ to see __all__ pairwise relationships __in one plot__
+
+Pairs plot can include the various kinds of pairwise plots we've seen:
+
+- Two quantitative variables: scatterplot
+
+- One categorical, one quantitative: side-by-side violins, stacked
+histograms, overlaid densities
+
+- Two categorical: stacked bars, side-by-side bars, mosaic plots
+
+---
+
+## Pairs plots for penguins
+
+.pull-left[
+
+Use the [`GGally`](https://ggobi.github.io/ggally/index.html) package
+
+
+```r
+library(GGally)
+penguins %&gt;% 
+* ggpairs(columns = 3:6)
+```
+
+Main arguments to change are:
+
++ `data`: specifies the dataset
+
++ `columns`: columns of data you want in the plot (can specify with vector of column names or numbers referring to the column indices)
+
++ `mapping`: aesthetics using `aes()` - most important is `aes(color = &lt;variable name&gt;)`
+
+Created pairs plot above by specifying `columns` as the four columns of continuous variables (columns 3-6)
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-11-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Pairs plots for penguins
+
+.pull-left[
+
+Annoying aspect: change `alpha` directly with `aes` when using `ggpairs`:
+
+
+```r
+penguins %&gt;% 
+  ggpairs(columns = 3:6,
+*         mapping = aes(alpha = 0.5))
+```
+
+- Diagonal: marginal distributions
+
+- Off-diagonal: joint (pairwise) distributions or statistical summaries (e.g., correlation)
+
+- Matrix of plots is symmetric
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec7/unnamed-chunk-12-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Read Demo3 for more info on customization!
+
+.pull-left[
+
+&lt;img src="figs/Lec7/unnamed-chunk-13-1.png" width="100%" /&gt;
+
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec7/unnamed-chunk-14-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## What about high-dimensional data?
+
+Consider this [dataset]((https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-12-21/readme.md)) containing nutrional information about Starbucks drinks:
+
+
+```r
+starbucks &lt;- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv") %&gt;%
+  # Convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g), fiber_g = as.numeric(fiber_g))
+starbucks %&gt;% slice(1)
+```
+
+```
+## # A tibble: 1 × 15
+##   product_name size   milk  whip serv_…¹ calor…² total…³ satur…⁴ trans…⁵ chole…⁶
+##   &lt;chr&gt;        &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 brewed coff… short     0     0     236       3     0.1       0       0       0
+## # … with 5 more variables: sodium_mg &lt;dbl&gt;, total_carbs_g &lt;dbl&gt;, fiber_g &lt;dbl&gt;,
+## #   sugar_g &lt;dbl&gt;, caffeine_mg &lt;dbl&gt;, and abbreviated variable names
+## #   ¹​serv_size_m_l, ²​calories, ³​total_fat_g, ⁴​saturated_fat_g, ⁵​trans_fat_g,
+## #   ⁶​cholesterol_mg
+## # ℹ Use `colnames()` to see all variable names
+```
+
+
+#### How do we visualize this dataset? 
+
+--
+
+- Tedious task: make a series of pairs plots (one giant pairs plot would overwhelming)
+
+
+---
+
+## What about high-dimensional data?
+
+
+
+```r
+starbucks &lt;- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv") %&gt;%
+  # Convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g), fiber_g = as.numeric(fiber_g))
+starbucks %&gt;% slice(1)
+```
+
+```
+## # A tibble: 1 × 15
+##   product_name size   milk  whip serv_…¹ calor…² total…³ satur…⁴ trans…⁵ chole…⁶
+##   &lt;chr&gt;        &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 brewed coff… short     0     0     236       3     0.1       0       0       0
+## # … with 5 more variables: sodium_mg &lt;dbl&gt;, total_carbs_g &lt;dbl&gt;, fiber_g &lt;dbl&gt;,
+## #   sugar_g &lt;dbl&gt;, caffeine_mg &lt;dbl&gt;, and abbreviated variable names
+## #   ¹​serv_size_m_l, ²​calories, ³​total_fat_g, ⁴​saturated_fat_g, ⁵​trans_fat_g,
+## #   ⁶​cholesterol_mg
+## # ℹ Use `colnames()` to see all variable names
+```
+
+#### Goals to keep in mind with visualizing high-dimensional data
+
+- __Visualize structure among observations__ using distances matrices, projections (Monday's lecture)
+
+- __Visualize structure among variables__ using correlation as "distance"
+
+
+---
+
+## Correlogram to visualize correlation matrix
+
+.pull-left[
+
+Use the [`ggcorrplot`](https://rpkgs.datanovia.com/ggcorrplot/) package
+
+
+```r
+starbucks_quant_cor &lt;- 
+* cor(dplyr::select(starbucks,
+                    serv_size_m_l:caffeine_mg))
+
+library(ggcorrplot)
+*ggcorrplot(starbucks_quant_cor,
+           method = "circle",
+           hc.order = TRUE,
+           type = "lower")
+```
+
+- Compute the correlation matrix (using quantitative variables)
+
+- Can rearrange using `hc.order = TRUE` based on clustering (next week!)
+
+- See Demo3 for more examples...
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec7/unnamed-chunk-17-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Parallel coordinates plot with [`ggparcoord`](https://ggobi.github.io/ggally/reference/ggparcoord.html)
+
+.pull-left[
+
+- Display each variable side-by-side on standardized axis
+
+- Connect observations with lines
+
+
+```r
+starbucks %&gt;%
+* ggparcoord(columns = 5:15,
+*            alphaLines = .1) +
+  theme(axis.text.x = 
+          element_text(angle = 90))
+```
+
+- Can change `scale` method for y-axis
+
+- Useful for moderate number of observations and variables
+
+- __How do we order the x-axis?__
+
+- __Does this agree with the correlogram?__
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec7/unnamed-chunk-18-1.png" width="100%" /&gt;
+
+]
+
+---
+class: center, middle
+
+# Next time: More High-Dimensional Data
+
+Reminder: __HW3 due tonight!__ 
+
+Recommended reading: 
+
+[CW Chapter 12 Visualizing associations among two or more quantitative variables](https://clauswilke.com/dataviz/visualizing-associations.html)
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

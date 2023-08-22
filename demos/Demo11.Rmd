@@ -1,0 +1,158 @@
+---
+title: "Animations"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+# Animations with `gganimate`
+  
+***
+
+###  The graphs below don't have proper titles, axis labels, legends, etc.  Please take care to do this on your own graphs.
+
+***
+
+## Use [`gganimate`](https://gganimate.com/) to add animations
+
+By far, the simplest way to create visualizations with animations is to use the [`gganimate` package](https://gganimate.com/). This effectively works as an extension to `ggplot` figures but with the inclusion of various `transition_*` functions
+
+### When should we animate plots?
+
+First, let's think about when you should __NOT__ animate a plot. We first create a visualization of the `penguins` data from before, of bill length on the `y`-axis against the body mass on the `x-axis` colored by `species`:
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+
+```
+
+Now, we _could_ do the following: use the `gganimate` package to only display one `species` at a time with the `transition_states()` function:
+
+```{r, warning = FALSE}
+library(gganimate)
+penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw() +
+  transition_states(species,
+                    transition_length = 0.5,
+                    state_length = 1)
+
+```
+
+The use of `transition_length` and `state_length` indicate how much _relative_ time should take place when transitioning between states and the pause at each state, respectively.  __But the above use of animation is useless!__
+
+![](https://c.tenor.com/YdcVUzGWl2wAAAAC/useless-starwars.gif)
+
+__So when should you consider using animation?__
+
+One appropriate usage is in the context of storytelling with data, to emphasize some aspect of your visual display. For instance, we'll borrow this F1 racing dataset from [Meghan Hall's iteration of 36-315](https://cmu-36315.netlify.app/) to compare the performance of three racing teams:
+
+```{r, warning = FALSE}
+# First load the data from Meghan's github
+f1_data_ex <- read_csv('https://raw.githubusercontent.com/meghall06/CMU-36-315-site/main/data/constructor_pts.csv') %>%
+  filter(name %in% c("McLaren", "Renault", "Racing Point"),
+         year == 2020)
+
+# Now display the results across the rounds:
+f1_data_ex %>%
+  ggplot(aes(x = round, y = points, group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw()
+```
+
+
+From above we can see the accumulated points increasing over time for each team, with McLaren finishing better than both, Racing Point and Renault, at the end. But we could incrementally reveal the results at each stage emphasize the story of progression. We're not adding another dimension to the display, but we emphasize the intermediate results through animation with the `transition_reveal()` function:
+
+```{r, warning = FALSE}
+f1_data_ex %>%
+  ggplot(aes(x = round, y = points, group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw() +
+  # Reveal the results by round
+  transition_reveal(round)
+```
+
+
+The most effective use of animation is when it adds another dimension to your visualization, typically in the form of time. The previous visualization only animated across the x-axis - it did NOT add another variable in our data. However, animation can let us bring in another dimension so that we can see differences between relationships of variables in various ways. You should watch [Hans Rosling's 200 Countries, 200 Years, 4 Minutes](https://www.youtube.com/watch?v=jbkSRLYSojo) to see one example in action. We can make similar visualizations with `gganimate`. 
+
+In the code chunk below, we're going to display yearly summaries about housing sales in TX (dataset comes loaded with `ggplot2`). We're going to plot the average number of active listings and average median sale price for each city-year combination in the data. For context, we're going to highlight the data for Houston in red with a larger point size:
+
+```{r}
+# Load the scales package for better labeling of the axes
+txhousing %>% 
+  group_by(city, year) %>% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %>% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  # Hide the legend for the point layer
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  # Manual color label
+  scale_color_manual(values = c("black", "darkred")) +
+  # Manual size adjustment
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red")
+```
+
+
+In the figure above we do not have year included in any way. But we can use the `transition_time()` function to animate the visual over time, while also updating the plot title to include the displayed year:
+
+```{r, warning = FALSE}
+# Load the scales package for better labeling of the axes
+txhousing %>% 
+  group_by(city, year) %>% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %>% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  # Hide the legend for the point layer
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  # Manual color label
+  scale_color_manual(values = c("black", "darkred")) +
+  # Manual size adjustment
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red", 
+       title = "Year: {frame_time}") +
+  transition_time(year)
+```
+
+From viewing the above visual, you can see how animation makes changes appear more dramatic between years - versus plotting each year separately with facets. We can then save the above animation as a GIF with the `anim_save("INSERT/FILEPATH")` function, which will save the last animation you made by default.
+
+```{r, eval = FALSE}
+anim_save("examples/txhousing.gif")
+```
+
+Some key points to think about before adding animation to a visualization:
+
+1. Always make and describe the original / base graphic first that does NOT include animation.
+
+2. Before adding animation to the graph, ask yourself: How would animation give you additional insights about the data **that you would otherwise not be able to**?
+
+3. Never add animation just because it's cool! 
+
+4. When presenting, make sure you explain exactly what is being displayed with animation and what within the animation you want to emphasize. This will help you determine if animation is actually worth including.
+

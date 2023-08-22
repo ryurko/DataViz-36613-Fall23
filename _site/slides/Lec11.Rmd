@@ -1,0 +1,428 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "Visualizing Text Data"  
+author: 
+  - "Professor Ron Yurko"
+date: '10/5/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec11/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+## Working with raw text data 
+
+- We'll work with script from the best episode of ['The Office': Season 4, Episode 13 - 'Dinner Party'](https://en.wikipedia.org/wiki/Dinner_Party_(The_Office))
+
+- We can access the script using the [`schrute` package (yes this is a real thing)](https://cran.r-project.org/web/packages/schrute/vignettes/theoffice.html):
+
+```{r}
+library(tidyverse)
+library(schrute)
+
+# Create a table from this package just corresponding to the Dinner Party episode:
+dinner_party_table <- theoffice %>%
+  filter(season == 4, episode == 13) %>%
+  # Just select columns of interest:
+  dplyr::select(index, character, text)
+head(dinner_party_table)
+```
+
+---
+
+## Bag of Words representation of text
+
+- Most common way to store text data is with a __document-term matrix__ (DTM):
+
+|            | Word 1   | Word 2   | $\dots$  | Word $J$ |
+| ---------- | -------- | -------- | -------- | -------- |
+| Document 1 | $w_{11}$ | $w_{12}$ | $\dots$  | $w_{1J}$ |
+| Document 2 | $w_{21}$ | $w_{22}$ | $\dots$  | $w_{2J}$ |
+| $\dots$    | $\dots$  | $\dots$  | $\dots$  | $\dots$  |
+| Document N | $w_{N1}$ | $w_{N2}$ | $\dots$  | $w_{NJ}$ |
+
+- $w_{ij}$: count of word $j$ in document $i$, aka _term frequencies_
+
+--
+
+Two additional ways to reduce number of columns:
+
+1. __Stop words__: remove extremely common words (e.g., of, the, a)
+
+2. __Stemming__: Reduce all words to their "stem"
+
+  - For example: Reducing = reduc. Reduce = reduc. Reduces = reduc.
+
+Easy to convert text into DTM format using [`tidytext` package](https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html)
+
+---
+
+## Tokenize text into long format
+
+- Convert raw text into long, tidy table with one-token-per-document-per-row
+
+  - A __token__ equals a unit of text - typically a word
+  
+```{r}
+library(tidytext)
+tidy_dinner_party_tokens <- dinner_party_table %>%
+  unnest_tokens(word, text) #<<
+# View the first so many rows:
+head(tidy_dinner_party_tokens)
+```
+
+
+---
+
+## Remove stop words and apply stemming
+
+.pull-left[
+
+- Load `stop_words` from `tidytext`
+
+```{r}
+data(stop_words)
+
+tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
+  filter(!(word %in% stop_words$word)) #<<
+
+head(tidy_dinner_party_tokens)
+```
+
+]
+
+--
+
+.pull-right[
+
+- Use [`SnowballC` package](https://cran.r-project.org/web/packages/SnowballC/SnowballC.pdf) to perform stemming
+
+```{r}
+library(SnowballC)
+
+tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
+  mutate(stem = wordStem(word)) #<<
+
+head(tidy_dinner_party_tokens)
+```
+
+]
+
+---
+
+## Create word cloud using term frequencies
+
+__Word Cloud__: Displays all words mentioned across documents, where more common words are larger
+
+- To do this, you must compute the _total_ word counts:
+
+$$w_{\cdot 1} = \sum_{i=1}^N w_{i1} \hspace{0.1in} \dots \hspace{0.1in} w_{\cdot J} = \sum_{i=1}^N w_{iJ}$$
+
+- Then, the size of Word $j$ is proportional to $w_{\cdot j}$
+
+--
+
+Create word clouds in `R` using [`wordcloud` package](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)
+
+Takes in two main arguments to create word clouds:
+
+1. `words`: vector of unique words
+
+2. `freq`: vector of frequencies
+
+
+---
+
+## Create word cloud using term frequencies
+
+.pull-left[
+
+```{r wordcloud, eval = FALSE}
+token_summary <- tidy_dinner_party_tokens %>%
+  group_by(stem) %>%
+  count() %>%
+  ungroup() 
+
+library(wordcloud)
+wordcloud(words = token_summary$stem, #<<
+          freq = token_summary$n, #<<
+          random.order = FALSE, #<<
+          max.words = 100, 
+          colors = brewer.pal(8, "Dark2"))
+```
+
+- Set `random.order = FALSE` to place biggest words in center
+
+- Can customize to display limited # words (`max.words`)
+
+- Other options as well like `colors`
+
+]
+
+.pull-right[
+
+```{r ref.label="wordcloud", fig.width=4, echo = FALSE}
+
+```
+
+
+]
+
+---
+
+## TF-IDF weighting
+
+- We saw that `michael` was the largest word, but what if I'm interested in comparing text across characters (i.e., documents)?
+
+--
+
+- It’s arguably of more interest to understand which words are frequently used in one set of texts but not the other, i.e., which words are unique?
+
+- Many text analytics methods will __down-weight__ words that occur frequently across all documents
+
+--
+
+- __Inverse document frequency (IDF)__: for word $j$ we compute $\text{idf}_j = \log \frac{N}{N_j}$
+
+  - where $N$ is number of documents, $N_j$ is number of documents with word $j$
+  
+--
+
+- Compute __TF-IDF__ $= w_{ij} \times \text{idf}_j$
+
+---
+
+## TF-IDF example with characters
+
+Compute and join TF-IDF using `bind_tf_idf()`:
+
+```{r}
+character_token_summary <- tidy_dinner_party_tokens %>%
+  group_by(character, stem) %>% #<<
+  count() %>%
+  ungroup() 
+
+character_token_summary <- character_token_summary %>%
+  bind_tf_idf(stem, character, n) #<<
+character_token_summary
+```
+
+
+---
+
+## Top 10 words by TF-IDF for each character
+
+.pull-left[
+
+```{r tfidf-plot, eval = FALSE}
+character_token_summary %>%
+  filter(character %in% c("Michael", "Jan", "Jim", "Pam")) %>%
+  group_by(character) %>%
+  slice_max(tf_idf, n = 10, with_ties = FALSE) %>% #<<
+  ungroup() %>%
+  mutate(stem = reorder_within(stem, tf_idf, #<<
+                               character)) %>% #<<
+  ggplot(aes(y = tf_idf, x = stem),
+         fill = "darkblue", alpha = 0.5) +
+  geom_col() +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~ character, ncol = 2, 
+             scales = "free") + #<<
+  labs(y = "TF-IDF", x = NULL)
+```
+
+- Bars can be simpler for comparison than several word clouds, to focus on top words
+
+]
+
+.pull-right[
+```{r ref.label="tfidf-plot", echo = FALSE, fig.width=4}
+
+```
+
+]
+
+---
+
+## Sentiment Analysis
+
+- The visualizations so far only look at word _frequency_ (possibly weighted with TF-IDF)
+
+  - Doesn't tell you _how_ words are used
+  
+--
+
+- A common goal in text analysis is to try to understand the overall __sentiment__ or "feeling" of text, i.e., __sentiment analysis__
+
+- Typical approach:
+
+  1.  Find a sentiment dictionary (e.g., "positive" and "negative" words)
+  
+  2. Count the number of words belonging to each sentiment
+  
+  3. Using the counts, you can compute an "average sentiment" (e.g., positive counts - negative counts)
+  
+--
+
+- This is called a __dictionary-based approach__
+
+- There are many sentiment dictionaries already available
+
+- The __Bing__ dictionary (named after Bing Liu) provides 6,786 words that are either "positive" or "negative"
+
+---
+
+## Character sentiment analysis
+
+.pull-left[
+
+```{r}
+get_sentiments("bing")
+```
+
+
+]
+
+--
+
+.pull-right[
+
+Join sentiment to token table (without stemming)
+
+```{r}
+tidy_all_tokens <- dinner_party_table %>%
+  unnest_tokens(word, text)
+
+tidy_sentiment_tokens <- tidy_all_tokens %>%
+  inner_join(get_sentiments("bing")) #<<
+
+head(tidy_sentiment_tokens)
+```
+
+
+
+]
+
+---
+
+## Character sentiment analysis
+
+.pull-left[
+
+```{r sentiment-plot, eval = FALSE}
+tidy_sentiment_tokens %>%
+  group_by(character, sentiment) %>%
+  summarize(n_words = n()) %>%
+  ungroup() %>%
+  group_by(character) %>%
+  mutate(total_assigned_words = sum(n_words)) %>%
+  ungroup() %>%
+  mutate(character = 
+           fct_reorder(character, 
+                       total_assigned_words)) %>%
+  ggplot(aes(x = character, y = n_words, 
+             fill = sentiment)) + #<<
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("red", "blue")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+
+]
+
+.pull-right[
+```{r ref.label = "sentiment-plot", fig.width=4, echo = FALSE}
+
+```
+
+]
+
+---
+
+## Other functions of text
+
+- We've just focused on word counts - __but there are many functions of text__
+
+- For example: __number of unique words__ is often used to measure vocabulary
+
+```{r, out.width="70%", echo = FALSE, fig.align='center'}
+knitr::include_graphics("https://pbs.twimg.com/media/DxCgsrxWwAAOWO3.jpg")
+```
+
+---
+
+# Main Takeaways
+
+- Text is arguably infinite-dimensional, and we need to (somehow) represent text with a finite number of dimensions
+
+- Most common representation: Bag of words and term frequencies (possibly weighted by TF-IDF)
+
+--
+
+- Word clouds are the most common way to visualize the most frequent
+words in a set of documents
+
+- TF-IDF weighting allows you to detect words that are uniquely used
+in certain documents
+
+- Common to plot the most "important words" of a set of documents,
+ordered by TF-IDF weights
+
+--
+
+- Can also measure the "sentiment" of text with sentiment-based dictionaries
+
+- Sentiment analyses are only as relevant as the dictionaries you use
+
+---
+class: center, middle
+
+# Next time: Dashboards
+
+__HW5 due today! Graphics Critique / Replication #2 due Friday Oct 7th!__ 
+
+Recommended reading: 
+
+[Text Mining With R](https://www.tidytextmining.com/)
+
+[Supervised Machine Learning for Text Analysis in R](https://smltar.com/)
+
+
+
+
+
+

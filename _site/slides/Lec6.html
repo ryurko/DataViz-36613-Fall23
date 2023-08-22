@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## 2D Quantitative Data
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 9/19/2022
+]
+
+---
+
+
+
+
+
+
+
+
+
+
+## Let's talk about the project..
+
+#### IDMRAD report, due Friday, Oct 14th at 5 PM EDT 
+
+- Read through the rubric file on Canvas in the `project` folder
+
+- You will find your team's assigned project dataset in [this google sheet](https://docs.google.com/spreadsheets/d/1XRCC8WO8O1-fy9nDf1pQ_15XxYYNGU6Z/edit?usp=sharing&amp;ouid=110931742237993657587&amp;rtpof=true&amp;sd=true)
+
+- Look at the example IDMRAD paper for how to structure reports (also covered in rubric)
+
+  - Your report will include many more (and higher quality) graphics!
+  
+  - Also required to make an interactive Shiny app/dashboard with link in report
+  
+- The remaining HWs will include exercises related to your projects
+
+---
+
+## 2D quantitative data
+
+- We're working with two variables: `\((X, Y) \in \mathbb{R}^2\)`, i.e., dataset with `\(n\)` rows and 2 columns
+
+--
+
+- Goals:
+
+  - describing the relationships between two variables
+  
+  - describing the conditional distribution `\(Y | X\)` via regression analysis
+  
+  - describing the joint distribution `\(X,Y\)` via contours, heatmaps, etc.
+  
+--
+
+- Few big picture ideas to keep in mind:
+
+  - scatterplots are by far the most common visual
+  
+  - regression analysis is by far the most popular analysis (you have a whole class on this...)
+  
+  - relationships may vary across other variables, e.g., categorical variables
+  
+---
+
+## Making scatterplots with `geom_point()`
+
+.pull-left[
+
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm,
+             y = body_mass_g)) +
+* geom_point()
+```
+
+- Displaying the joint distribution
+
+- What is the __obvious flaw__ with this plot?
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-2-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Making scatterplots: ALWAYS adjust the `alpha`
+
+.pull-left[
+
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm,
+             y = body_mass_g)) +
+* geom_point(alpha = 0.5)
+```
+
+- Adjust the transparency of points via `alpha` to __visualize overlap__ 
+
+- Provides better understanding of joint frequency
+
+- TEspecially important with larger datasets
+
+
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-3-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Displaying trend lines: linear regression
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g)) +
+  geom_point(alpha = 0.5) + 
+* geom_smooth(method = "lm")
+```
+
+- Displays `body_mass_g ~ flipper_length_mm` regression line
+
+- Adds 95% confidence intervals by default
+
+- Estimating the __conditional expectation__ of `body_mass_g` | `flipper_length_mm`, 
+
+  - i.e., `\(\mathbb{E}[Y | X]\)`
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-4-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Assessing assumptions of linear regression
+
+Linear regression assumes `\(Y_i \overset{iid}{\sim} N(\beta_0 + \beta_1 X_i, \sigma^2)\)`
+
+- If this is true, then `\(Y_i - \hat{Y}_i \overset{iid}{\sim} N(0, \sigma^2)\)`
+
+--
+
+Plot residuals against `\(\hat{Y}_i\)`, __residuals vs fit__ plot
+
+- Used to assess linearity, any divergence from mean 0
+
+- Used to assess equal variance, i.e., if `\(\sigma^2\)` is homogenous across predictions/fits `\(\hat{Y}_i\)`
+
+--
+
+More difficult to assess the independence and fixed `\(X\)` assumptions
+
+- Make these assumptions based on subject-matter knowledge
+
+---
+
+## Residual vs fit plots
+
+.pull-left[
+
+
+```r
+lin_reg &lt;- 
+* lm(body_mass_g ~ flipper_length_mm,
+     data = penguins)
+
+tibble(fits = fitted(lin_reg), 
+       residuals = residuals(lin_reg)) %&gt;%
+  ggplot(aes(x = fits, y = residuals)) +
+  geom_point(alpha = 0.5) +
+* geom_hline(yintercept = 0,
+*            linetype = "dashed",
+             color = "red")
+```
+
+Two things to look for:
+
+1. Any trend around horizontal reference line?
+
+2. Equal vertical spread?
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Residual vs fit plots
+
+.pull-left[
+
+
+```r
+tibble(fits = fitted(lin_reg), 
+       residuals = residuals(lin_reg)) %&gt;%
+  ggplot(aes(x = fits, y = residuals)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, 
+             linetype = "dashed",
+             color = "red") +
+* geom_smooth()
+```
+
+Two things to look for:
+
+1. Any trend around horizontal reference line? 
+
+  - add `geom_smooth` to highlight this
+
+2. Equal vertical spread?
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-6-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Local linear regression via LOESS (Local Estimated Scatterplot Smoothing)
+
+Still assume Normality, but not linearity: `\(Y_i \overset{iid}{\sim} N(f(x), \sigma^2)\)`, where `\(f(x)\)` is some unknown function
+
+--
+
+In __local linear regression__, we estimate `\(f(X_i)\)`:
+
+`$$\text{arg }\underset{\beta_0, \beta_1}{\text{min}} \sum_i^n w_i(x) \cdot \big(Y_i - \beta_0 - \beta_1 X_i \big)^2$$` 
+
+- Notice the weights depend on `\(x\)`, meaning observations close to `\(x\)` given large weight in estimating `\(f(x)\)`
+
+--
+
+`geom_smooth()` uses tri-cubic weighting:
+
+`$$w_i(d_i) = \begin{cases} (1 - |d_i|^3)^3, \text{ if } i \in \text{neighborhood of  } x, \\
+0 \text{ if } i \notin \text{neighborhood of  } x \end{cases}$$`
+
+  - where `\(d_i\)` is the distance between `\(x\)` and `\(X_i\)` scaled to be between 0 and 1
+  
+  - control `span`: decides proportion of observations in neighborhood
+  
+---
+
+## Displaying trend lines: LOESS
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g)) +
+  geom_point(alpha = 0.5) + 
+* geom_smooth()
+```
+
+- LOESS is default behavior with `\(n \leq 1000\)`
+
+- Default `span = 0.75`
+
+- For `\(n &gt; 1000\)`, `mgcv::gam()` is used with `formula = y ~ s(x, bs = "cs")` and `method = "REML"`
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-7-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Displaying trend lines: LOESS
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g)) +
+  geom_point(alpha = 0.5) + 
+* geom_smooth(span = .1)
+```
+
+- LOESS is default behavior with `\(n \leq 1000\)`
+
+- Default `span = 0.75`
+
+- For `\(n &gt; 1000\)`, `mgcv::gam()` is used with `formula = y ~ s(x, bs = "cs")` and `method = "REML"`
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-8-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Can also update formula within plot
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g)) +
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm",
+*             formula = y ~ x + I(x^2))
+```
+
+- Fit `body_mass_g ~ flipper_length_mm + flipper_length_mm^2` instead
+
+- _Exercise: check the updated residual plot with this model_ 
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec6/unnamed-chunk-9-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## What about focusing on the joint distribution?
+
+
+
+.pull-left[
+
+- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+* coord_fixed() +
+  theme_bw()
+```
+
+- Where are the high/low concentrations of X,Y?
+
+- How do we display concentration for 2D data?
+
+- `coord_fixed()` so axes match with unit scales
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec6/unnamed-chunk-11-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Going from 1D to 2D density estimation
+
+In 1D: estimate density `\(f(x)\)`, assuming that `\(f(x)\)` is _smooth_:
+
+$$
+\hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
+$$
+
+--
+
+In 2D: estimate joint density `\(f(x_1, x_2)\)`
+
+`$$\hat{f}(x_1, x_2) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h_1h_2} K(\frac{x_1 - x_{i1}}{h_1}) K(\frac{x_2 - x_{i2}}{h_2})$$`
+
+--
+
+In 1D there was one bandwidth, now __we have two bandwidths__
+
+  - `\(h_1\)`: controls smoothness as `\(X_1\)` changes, holding `\(X_2\)` fixed
+  - `\(h_2\)`: controls smoothness as `\(X_2\)` changes, holding `\(X_1\)` fixed
+
+Again Gaussian kernels are the most popular...
+
+---
+
+## So how do we display densities for 2D data?
+
+&lt;img src="https://www.byclb.com/TR/Tutorials/neural_networks/Ch_4_dosyalar/image044.gif" width="60%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## How to read contour plots?
+
+Best known in topology: outlines (contours) denote levels of elevation
+
+&lt;img src="https://preview.redd.it/2rbe8s8t7re31.jpg?auto=webp&amp;s=eed849b180dd803d394f556432df026c4cd1dae2" width="60%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+* geom_density2d() +
+  coord_fixed() +
+  theme_bw()
+```
+
+- Use `geom_density2d` to display contour lines
+
+- Inner lines denote "peaks"
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec6/unnamed-chunk-14-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* stat_density2d(aes(fill = after_stat(level)),
+*                geom = "polygon") +
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+* scale_fill_gradient(low = "darkblue",
+*                     high = "darkorange") +
+  theme_bw()
+```
+
+- Use `stat_density2d` for additional features
+
+- May be easier to read than nested lines with color
+
+- __Default color scale is awful!__ Always change it!
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec6/unnamed-chunk-15-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Visualizing grid heat maps
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* stat_density2d(aes(fill = after_stat(density)),
+*                geom = "tile",
+*                contour = FALSE) +
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+* scale_fill_gradient(low = "white",
+*                     high = "red") +
+  theme_bw()
+```
+
+- Divide the space into a grid and color the grid according to high/low values
+
+- Common to treat "white" as empty color
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec6/unnamed-chunk-16-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Alternative idea: hexagonal binning
+
+.pull-left[
+
+
+
+```r
+ohtani_pitches %&gt;%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+* geom_hex() +
+  coord_fixed() +
+  scale_fill_gradient(low = "darkblue", 
+                      high = "darkorange") + 
+  theme_bw()
+```
+
+- Can specify `binwidth` in both directions
+
+- 2D version of histogram 
+
+- _Need to install `hexbin` package_
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec6/unnamed-chunk-17-1.png" width="100%" /&gt;
+
+]
+
+
+---
+class: center, middle
+
+# Next time: High-Dimensional Data
+
+Reminder: __HW3 due Wednesday!__ 
+
+Recommended reading: 
+
+[Demo 2 Scatterplots and regression with categorical variables](https://cmu-36613.netlify.app/demos/Demo2.html)
+
+[CW Chapter 12 Visualizing associations among two or more quantitative variables](https://clauswilke.com/dataviz/visualizing-associations.html)
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,782 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "Density Estimation"  
+author: 
+  - "Professor Ron Yurko"
+date: '9/14/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec5/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+```{r, include = FALSE}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+## Simulate data from mixture of Normal distributions
+
+
+Will sample 100 draws from $N(-1.5, 1)$ and 100 draws from $N(1.5, 1)$
+
+```{r, echo = FALSE}
+tibble(x = c(-5, 5)) %>%
+  ggplot(aes(x)) +
+  geom_function(fun = function(x) dnorm(x, mean = -1.5, sd = 1) + 
+                  dnorm(x, mean = 1.5, sd = 1)) + 
+  labs(x = "Fake variable x") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank())
+```
+
+---
+
+# Revisit histograms
+
+.pull-left[
+
+```{r hist1, eval = FALSE}
+set.seed(2020)
+fake_data <- 
+  tibble(fake_x = c(rnorm(100, -1.5), 
+                    rnorm(100, 1.5))) %>%
+  mutate(component = 
+           c(rep("left", 100), 
+             rep("right", 100)))
+
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram() +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+- Default histogram with 30 bins...
+
+
+]
+
+.pull-right[
+
+```{r ref.label = 'hist1', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+
+## What happens as we change the number of bins?
+
+
+.pull-left[
+
+- Decrease it to 15 bins
+
+
+```{r hist2, fig.height = 6}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 15) + #<<
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+--
+
+.pull-right[
+
+- Increase it to 60 bins
+
+```{r hist3, fig.height = 6}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 60) + #<<
+  scale_x_continuous(limits = c(-5, 5))
+```
+]
+
+---
+
+## What happens as we change the number of bins?
+
+
+.pull-left[
+
+- Decrease it to 5 bins
+
+
+```{r hist4, fig.height = 6}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 5) + #<<
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+--
+
+.pull-right[
+
+- Increase it to 100 bins
+
+```{r hist5, fig.height = 6}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 100) + #<<
+  scale_x_continuous(limits = c(-5, 5))
+```
+]
+
+---
+
+## Variability of graphs - 30 bins
+
+.pull-left[
+
+- First sample with 30 bins...
+
+```{r, echo = FALSE, fig.height=7}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram() +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+.pull-right[
+
+- __What happens with a different sample?__
+
+```{r, echo = FALSE, fig.height=7}
+set.seed(1979)
+fake_data2 <- 
+  tibble(fake_x = c(rnorm(100, -1.5), 
+                    rnorm(100, 1.5))) %>%
+  mutate(component = 
+           c(rep("left", 100), 
+             rep("right", 100)))
+
+fake_data2 %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram() +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+]
+
+
+---
+
+## Variability of graphs - 15 bins
+
+.pull-left[
+
+- First sample with 15 bins...
+
+```{r, echo = FALSE, fig.height=7}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 15) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+.pull-right[
+
+- __What happens with a different sample?__
+
+```{r, echo = FALSE, fig.height=7}
+fake_data2 %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 15) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+]
+
+
+---
+
+## Variability of graphs - too few bins
+
+.pull-left[
+
+- __High bias__
+
+```{r, echo = FALSE, fig.height=7}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 5) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+
+.pull-right[
+
+- __Low variance__
+
+```{r, echo = FALSE, fig.height=7}
+fake_data2 %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 5) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+]
+
+---
+
+## Variability of graphs - too many bins
+
+.pull-left[
+
+- __Low bias__
+
+```{r, echo = FALSE, fig.height=7}
+fake_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 100) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+
+]
+
+.pull-right[
+
+- __High variance__
+
+```{r, echo = FALSE, fig.height=7}
+fake_data2 %>%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram(bins = 100) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+]
+
+---
+
+## Back to penguins...
+
+.pull-left[
+
+- We make __histograms__ with [`geom_histogram()`](https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+
+```{r histogram, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + #<<
+  geom_histogram() #<<
+```
+
+
+- __Pros__:
+  - Displays full shape of distribution
+  - Easy to interpret and see sample size
+
+- __Cons__:
+  - Have to choose number of bins and bin locations
+  - You can make a bad histogram
+  
+]
+.pull-right[
+```{r ref.label = 'histogram', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+# What about displaying conditional distributions?
+
+.pull-left[
+
+```{r histogram-stack, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_histogram(aes(fill = species)) #<<
+```
+
+  - Display conditional distribution of `flipper_length_mm` | `species`, i.e., `x` | `fill`
+  
+  - Default behavior is to __stack__ histograms
+  
+  - __What distribution is easy to see here?__
+  
+  
+]
+.pull-right[
+```{r ref.label = 'histogram-stack', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+# What about displaying conditional distributions?
+
+.pull-left[
+
+```{r histogram-alpha, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_histogram(aes(fill = species),
+                 position = "identity", #<<
+                 alpha = 0.3) #<<
+```
+
+  - Can change to overlay histograms
+  
+  - Modify the `position` to be `identity`
+  
+  - Need to adjust transparency with `alpha`
+  
+  
+]
+.pull-right[
+```{r ref.label = 'histogram-alpha', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+# Normalize histogram frequencies with density values
+
+.pull-left[
+
+```{r histogram-dens, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_histogram(
+    aes(y = after_stat(density), #<<
+        fill = species),
+    position = "identity", 
+    alpha = 0.3) 
+```
+
+- Total area under the bars equals to 1
+
+- Area of any bar is height $\times$ width $=$ density $\times$ width
+  
+]
+.pull-right[
+```{r ref.label = 'histogram-dens', echo = FALSE, fig.height=7}
+```
+]
+
+
+---
+
+## Use density curves instead for comparison
+
+.pull-left[
+
+```{r density-color, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density(aes(color = species)) #<<
+```
+
+  - Much easier to overlay for comparisons
+  
+  - Uses minimal amount of ink
+  
+]
+.pull-right[
+```{r ref.label = 'density-color', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+## We do NOT fill the density curves
+
+.pull-left[
+
+```{r density-fill, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density(aes(fill = species),
+               alpha = .3) #<<
+```
+
+  - __Unnecessary ink!__
+  
+  - Fill will be overwhelming with several categorical levels
+  
+]
+.pull-right[
+```{r ref.label = 'density-fill', echo = FALSE, fig.height=7}
+```
+]
+
+
+
+---
+
+### How do histograms relate to the PDF and CDF?
+
+__Remember__: we use the __probability density function (PDF)__ to provide a __relative likelihood__
+
+--
+- PDF is the __derivative__ of the cumulative distribution function (CDF)
+
+
+--
+- Histograms approximate the PDF with bins, and __points are equally likely within a bin__
+
+.pull-left[
+```{r ref.label = 'histogram', echo = FALSE, fig.height=6}
+```
+]
+.pull-right[
+```{r ecdf, echo = FALSE, fig.height=6}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  stat_ecdf() + #<<
+  theme_bw()
+```
+
+]
+
+
+--
+__What can say about the relative likelihood of data we have not observed?__
+
+---
+
+## Kernel density estimation
+
+__Goal__: estimate the PDF $f(x)$ for all possible values (assuming it is continuous / smooth)
+
+--
+
+$$
+\text{Kernel density estimate: } \hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
+$$
+
+--
+- $n =$ sample size, $x =$ new point to estimate $f(x)$ (does NOT have to be in dataset!)
+
+
+--
+- $h =$ __bandwidth__, analogous to histogram bin width, ensures $\hat{f}(x)$ integrates to 1
+
+- $x_i =$ $i$th observation in dataset
+
+
+--
+- $K_h(x - x_i)$ is the __Kernel__ function, creates __weight__ given distance of $i$th observation from new point 
+  - as $|x - x_i| \rightarrow \infty$ then $K_h(x - x_i) \rightarrow 0$, i.e. further apart $i$th row is from $x$, smaller the weight
+  
+  - as __bandwidth__ $h \uparrow$ weights are more evenly spread out (as $h \downarrow$ more concentrated around $x$) 
+
+  - typically use [__Gaussian__ / Normal](https://en.wikipedia.org/wiki/Normal_distribution) kernel: $\propto e^{-(x - x_i)^2 / 2h^2}$
+  
+  - $K_h(x - x_i)$ is large when $x_i$ is close to $x$
+  
+
+---
+
+## [Wikipedia example](https://en.wikipedia.org/wiki/Kernel_density_estimation)
+
+.center[![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Comparison_of_1D_histogram_and_KDE.png/1000px-Comparison_of_1D_histogram_and_KDE.png)]
+  
+---
+
+## We display __kernel density estimates__ with [`geom_density()`](https://ggplot2.tidyverse.org/reference/geom_density.html)
+
+.pull-left[
+
+```{r curve, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density() + #<<
+  theme_bw()
+```
+
+- __Pros__:
+  - Displays full shape of distribution
+  - Can easily layer
+  - Add categorical variable with color
+
+- __Cons__:
+  - Need to pick bandwidth and kernel...
+  
+]
+.pull-right[
+```{r ref.label = 'curve', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+## Choice of [kernel?](https://en.wikipedia.org/wiki/Kernel_(statistics)
+
+```{r, echo = FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Kernels.svg/1000px-Kernels.svg.png")
+```
+
+
+---
+
+## What about the bandwidth? 
+
+Use __Gaussian reference rule__ (_rule-of-thumb_) $\approx 1.06 \cdot \sigma \cdot n^{-1/5}$, where $\sigma$ is the observed standard deviation
+
+Modify the bandwidth using the `adjust` argument - __value to multiply default bandwidth by__
+
+.pull-left[
+```{r curve-noisy, fig.height=4}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density(adjust = 0.5) + #<<
+  theme_bw()
+```
+
+  
+]
+.pull-right[
+```{r curve-smooth, fig.height=4}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density(adjust = 2) + #<<
+  theme_bw()
+```
+]
+
+---
+
+## CAUTION: dealing with bounded data...
+
+.pull-left[
+
+```{r bound-dens, eval=FALSE}
+set.seed(101)
+bound_data <- tibble(fake_x = runif(100))
+
+bound_data %>%
+  ggplot(aes(x = fake_x)) +
+  geom_density() +
+  geom_rug(alpha = 0.5) + #<<
+  stat_function(data = 
+                  tibble(fake_x = c(0, 1)),
+                fun = dunif, color = "red") +
+  scale_x_continuous(limits = c(-.5, 1.5))
+
+```
+
+- Use `geom_rug()` to display raw data points
+
+- __Observe density estimates for impossible values!__
+
+- Proposed solutions based on [reflecting](https://github.com/tidyverse/ggplot2/issues/3387)
+
+- Check out [`evmix` package for more information](https://www.jstatsoft.org/article/view/v084i05)
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bound-dens', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+
+## Alternative density-based option: violin plots
+
+.pull-left[
+
+```{r violins, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+  geom_violin() + #<<
+  coord_flip()
+```
+
+- __Pros__:
+  - Displays full shape of distribution
+  
+  - Can easily layer...
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Mirror image is duplicate information...
+
+]
+.pull-right[
+
+```{r ref.label = 'violins', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+
+## Alternative density-based option: violin plots
+
+.pull-left[
+
+```{r violins2, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+  geom_violin() + 
+  geom_boxplot(width = .2) + #<<
+  coord_flip()
+```
+
+- __Pros__:
+
+  - Displays full shape of distribution
+  
+  - __Can easily layer with box plots on top__
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Mirror image is duplicate information...
+
+]
+.pull-right[
+
+```{r ref.label = 'violins2', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+
+## Alternative density-based option: ridge plots
+
+.pull-left[
+
+- Available with [`ggridges` package](https://cran.r-project.org/web/packages/ggridges/vignettes/introduction.html)
+
+```{r ridges, eval = FALSE}
+library(ggridges)
+penguins %>%
+  ggplot(aes(x = flipper_length_mm, 
+             y = species)) + #<<
+  geom_density_ridges(rel_min_height = 0.01) #<<
+```
+
+- __Pros__:
+
+  - Drops the mirror image of violins
+  
+  - Useful for many categorical levels (especially ordinal data)
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Be careful with overlap...
+
+]
+.pull-right[
+
+```{r ref.label = 'ridges', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+
+
+## Alternative data-based option: beeswarm plots
+
+.pull-left[
+
+- Available with [`ggbeeswarm` package](https://github.com/eclarke/ggbeeswarm)
+
+
+```{r beeswarm, eval = FALSE}
+library(ggbeeswarm)
+penguins %>%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+  geom_beeswarm(cex = 1.5) + #<<
+  coord_flip()
+```
+
+- __Pros__:
+
+  - Displays full shape of distribution
+  
+  - Displays each data point individually
+  
+- __Cons__:
+
+  - Which algorithm for arranging points?
+  
+  - __What's another major disadvantage?__
+
+]
+.pull-right[
+
+```{r ref.label = 'beeswarm', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+class: center, middle
+
+# Next time: 2D Quantitative Data
+
+Reminder: __HW2 due tonight!__ __Graphics critique/replication due Friday!__
+
+Recommended reading: 
+
+[CW Chapter 7 Visualizing distributions: Histograms and density plots](https://clauswilke.com/dataviz/histograms-density-plots.html)
+
+

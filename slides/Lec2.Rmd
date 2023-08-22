@@ -1,0 +1,559 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "1D Categorical Data"  
+author: 
+  - "Professor Ron Yurko"
+date: '8/30/2023'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec2/"
+)
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#0277BD",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+## 1D categorical data
+
+
+Two different versions of categorical:
+
+--
+
+#### _Nominal_: coded with arbitrary numbers, i.e., no real order
+
++ Examples: race, gender, species, text
+  
+--
+
+#### _Ordinal_: levels with a meaningful order
+
++ Examples: education level, grades, ranks
+  
+--
+
+#### __NOTE__: `R` and `ggplot` considers a categorical variable to be `factor`
+
+  + `R` will always treat categorical variables as ordinal! Defaults to alphabetical...
+  
+  + We will need to manually define the `factor` levels
+
+
+
+---
+
+## 1D categorical data structure
+
++ Observations are collected into a vector $(x_1, \dots, x_n)$, where $n$ is number of observations
+
++ Each observed value $x_i$ can only belong to one category level $\{ C_1, C_2, \dots \}$
+
+--
+
+We're going to look at `penguins` data from the [`palmerpenguins`](https://allisonhorst.github.io/palmerpenguins/) package, specifically the `species` column:
+
+```{r}
+library(palmerpenguins)
+head(penguins$species)
+```
+
+
+#### How could we summarize these data? What information would you report?
+
+--
+
+Tables are the most common form of non-graphical EDA:
+
+```{r}
+table(penguins$species)
+```
+
+
+---
+
+## Area plots
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://clauswilke.com/dataviz/directory_of_visualizations_files/figure-html/proportions-1.png")
+```
+
+--
+
+- Each area corresponds to one categorical level
+
+- Area is proportional to counts/frequencies/percentages
+
+- Differences between areas correspond to differences between counts/frequencies/percentages
+
+
+---
+
+## Bar charts
+
+
+.pull-left[
+
+- Rectangular bar is created for each unique categorical level
+
+- heights $\propto$ counts (proportions)
+
+- width $\propto$ 1 (i.e., nothing!)
+
+- $\rightarrow$ area $\propto$ counts (proportions)
+
+```{r bar-chart, fig.show = 'hide'}
+library(tidyverse)
+penguins %>% 
+  ggplot(aes(x = species)) +
+  geom_bar() #<<
+```
+
+- `geom_bar` to display bar charts
+
+  + appears to count the levels...
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bar-chart', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## Behind the scenes: statistical summaries
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://d33wubrfki0l68.cloudfront.net/70a3b18a1128c785d8676a48c005ee9b6a23cc00/7283c/images/visualization-stat-bar.png")
+```
+
+From [Chapter 3 of R for Data Science](https://r4ds.had.co.nz/data-visualisation.html)
+
+
+---
+
+## Spine charts
+
+.pull-left[
+
+Consists of a single bar whose height or width is divided into different
+categories - with two versions:
+
+- height $\propto$ counts (proportions)
+
+```{r spine-height-chart, fig.show = 'hide'}
+penguins %>% 
+  ggplot(aes(fill = species, x = "")) + #<<
+  geom_bar() 
+```
+
+- width $\propto$ counts (proportions)
+
+```{r spine-width-chart, fig.show = 'hide'}
+penguins %>% 
+  ggplot(aes(fill = species, x = "")) + 
+  geom_bar() +
+  coord_flip() #<<
+```
+
+
+]
+
+.pull-right[
+
+```{r ref.label = 'spine-height-chart', echo = FALSE, fig.width=4, fig.height=2}
+```
+
+```{r ref.label = 'spine-width-chart', echo = FALSE, fig.width=5, fig.height=2}
+```
+
+]
+
+---
+
+## What does a bar chart show?
+
+#### Marginal Distribution
+
+- Assume categorical variable $X$ has $K$ categories: $C_1, \dots, C_K$
+
+- __True__ marginal distribution of $X$: 
+
+$$
+P(X = C_j) = p_j,\ j \in \{ 1, \dots, K \}
+$$
+
+--
+
+#### We have access to the Empirical Marginal Distribution
+
+- Observed distribution of $X$, our best estimate (MLE) of the marginal distribution of $X$: $\hat{p}_1$, $\hat{p}_2$, $\dots$, $\hat{p}_K$
+
+
+```{r}
+# Proportion estimates for penguins species
+table(penguins$species) / nrow(penguins)
+```
+
+
+---
+
+## Bar charts with proportions
+
+.pull-left[
+
+- [`after_stat()`](https://ggplot2.tidyverse.org/reference/aes_eval.html) indicates the aesthetic mapping is performed after statistical transformation
+
+- Use `after_stat(count)` to access the `stat_count()` called by `geom_bar()`
+
+```{r bar-prop-chart, fig.show = 'hide'}
+penguins %>% 
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = after_stat(count) / #<<
+                 sum(after_stat(count)))) + #<<
+  labs(y = "Proportion")
+```
+
+- Kind of weird code to use...
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bar-prop-chart', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## Compute and display the proportions directly
+
+
+.pull-left[
+
+```{r bar-prop-chart-group, fig.show = 'hide'}
+penguins %>%
+  group_by(species) %>% #<<
+  summarize(count = n(), #<<
+            .groups = "drop") %>% #<<
+  mutate(total = sum(count), #<<
+         prop = count / total) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") 
+```
+
+- Use `group_by()`, `summarize()`, and `mutate()` in a pipeline to compute then display the proportions directly
+
+- Need to indicate we are displaying the `y` axis as given, i.e., the identity function
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bar-prop-chart-group', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+
+---
+
+## Statistical inference for proportions
+
+- Our estimate for $p_j$ is $\hat{p}_j = \frac{n_j}{n}$, compute the standard error as:
+
+$$
+SE(\hat{p}_j) = \sqrt{\frac{\hat{p}_j(1 - \hat{p}_j)}{n}}
+$$
+
+--
+
+- Compute $\alpha$-level __confidence interval__ (CI) as $\hat{p}_j \pm z_{1 - \alpha / 2} \cdot SE(\hat{p}_j)$
+
+- Good rule-of-thumb: construct 95% CI using $\hat{p}_j \pm 2 \cdot SE(\hat{p}_j)$
+
+--
+
+- Just an approximation justified by CLT, so CI could include values outside of [0,1]
+
+--
+
+#### Add CIs to bars for 1D categorical data
+
+- Need to remember each CI is for each $\hat{p}_j$ marginally, not jointly
+
+- Have to be careful with __multiple testing__ 
+
+---
+
+## Add standard errors to bars
+
+.pull-left[
+
+```{r bar-prop-chart-se, fig.show = 'hide'}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / total), #<<
+         lower = prop - 2 * se, #<<
+         upper = prop + 2 * se) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") +
+  geom_errorbar(aes(ymin = lower, #<<
+                    ymax = upper), #<<
+                color = "red") #<<
+```
+
+
+- If CIs don’t overlap $\rightarrow$ likely significant difference
+
+- If CIs overlap a little $\rightarrow$ ambiguous
+
+- If CIs overlap a lot $\rightarrow$ no significant difference
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bar-prop-chart-se', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## Why does this matter?
+
+.pull-left[
+
+```{r, fig.width=5, fig.height=4, echo = FALSE}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / total), #<<
+         lower = prop - 2 * se, #<<
+         upper = prop + 2 * se) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") 
+```
+
+]
+
+.pull-right[
+
+```{r, fig.width=5, fig.height=4, echo = FALSE}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / total), #<<
+         lower = prop - 2 * se, #<<
+         upper = prop + 2 * se) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") 
+```
+
+]
+
+---
+
+## Graphs can appear the same with very different statistical conclusions - mainly due to sample size
+
+.pull-left[
+
+```{r, fig.width=5, fig.height=4, echo = FALSE}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / total), #<<
+         lower = prop - 2 * se, #<<
+         upper = prop + 2 * se) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") +
+  geom_errorbar(aes(ymin = lower, #<<
+                    ymax = upper), #<<
+                color = "red") #<<
+```
+
+]
+
+.pull-right[
+
+```{r, fig.width=5, fig.height=4, echo = FALSE}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / 30), #<<
+         lower = prop - 2 * se, #<<
+         upper = prop + 2 * se) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") +
+  geom_errorbar(aes(ymin = lower, #<<
+                    ymax = upper), #<<
+                color = "red") #<<
+```
+
+]
+
+---
+
+## Useful to order categories by frequency with [`forcats`](https://forcats.tidyverse.org/)
+
+.pull-left[
+
+```{r bar-prop-chart-order, fig.show = 'hide'}
+penguins %>%
+  group_by(species) %>% 
+  summarize(count = n(), .groups = "drop") %>% 
+  mutate(total = sum(count), 
+         prop = count / total,
+         se = sqrt(prop * (1 - prop) / total), 
+         lower = prop - 2 * se, 
+         upper = prop + 2 * se,
+         species = 
+           fct_reorder(species, prop)) %>% #<<
+  ggplot(aes(x = species)) +
+  geom_bar(aes(y = prop),
+           stat = "identity") +
+  geom_errorbar(aes(ymin = lower, 
+                    ymax = upper), 
+                color = "red") 
+```
+
+
+]
+
+.pull-right[
+
+```{r ref.label = 'bar-prop-chart-order', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+
+---
+
+## So you want to make pie charts...
+
+
+.pull-left[
+
+- Circle is divided up into sections, i.e., _pie slices_, one slice for each
+category
+
+- Total area $= \pi r^2$, slice area $= \frac{\pi r^2 \cdot \theta}{360}$
+
+- Angle $\theta \propto$ counts (proportions), and radius $r \propto 1$
+
+
+```{r pie-chart, fig.show = 'hide'}
+penguins %>% 
+  ggplot(aes(fill = species, x = "")) + 
+  geom_bar(aes(y = after_stat(count))) + #<<
+  coord_polar(theta = "y") #<<
+```
+
+
+]
+
+.pull-right[
+
+```{r ref.label = 'pie-chart', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## It's true...
+
+```{r, echo = FALSE, out.width="50%", fig.align='center'}
+knitr::include_graphics("https://cdn-media-1.freecodecamp.org/images/5S8tNA6GCGEl-ANW7fu20o63I35bZ46Trsdy")
+```
+
+---
+
+## But why?...
+
+
+.pull-left[
+
+```{r, echo = FALSE, out.width="90%", fig.align='center'}
+knitr::include_graphics("https://datachant.com/wp-content/uploads/2019/10/Bad-Pie-Chart-1.png")
+```
+
+
+]
+
+
+.pull-right[
+
+]
+
+#### You should almost always stick to bars!
+
+---
+class: center, middle
+
+# Next time: 2D categorical data
+
+Recap: __Make bar charts with standard errors for 1D categorical data__
+
+Recommended reading: 
+
+[CW Chapter 10 Visualizing proportions](https://clauswilke.com/dataviz/visualizing-proportions.html)
+
+[CW Chapter 16.2 Visualizing the uncertainty of point estimates](https://clauswilke.com/dataviz/visualizing-uncertainty.html#visualizing-the-uncertainty-of-point-estimates)
+
+
+[KH Chapter 3 Make a plot](https://socviz.co/makeplot.html#makeplot)
+
+
+
+

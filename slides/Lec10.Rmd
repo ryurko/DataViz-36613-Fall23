@@ -1,0 +1,498 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "Visualizing Spatial Data and Maps"  
+author: 
+  - "Professor Ron Yurko"
+date: '10/3/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec10/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+```{r, include = FALSE}
+library(tidyverse)
+airports <- read_csv("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat",
+                     col_names = c("ID", "name", "city", "country", "IATA_FAA", 
+                                   "ICAO", "lat", "lon", "altitude", "timezone", "DST"))
+
+routes <- read_csv("https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat",
+                   col_names = c("airline", "airlineID", "sourceAirport", 
+                                 "sourceAirportID", "destinationAirport", 
+                                 "destinationAirportID", "codeshare", "stops",
+                                 "equipment"))
+
+departures <- routes %>% 
+  group_by(sourceAirportID) %>%
+  summarize(n_depart = n()) %>%
+  mutate(sourceAirportID = as.integer(sourceAirportID))
+
+arrivals <- routes %>% 
+  group_by(destinationAirportID) %>% 
+  summarize(n_arrive = n()) %>% 
+  mutate(destinationAirportID = as.integer(destinationAirportID))
+
+airports <- airports %>%
+  left_join(departures, by = c("ID" = "sourceAirportID"))
+airports <- airports %>%
+  left_join(arrivals, by = c("ID" = "destinationAirportID"))
+```
+
+
+# How should we think about spatial data?
+
+- Typically location is measured with __latitude__ / __longitude__ (2D)
+
+- __Latitude__: Measures North / South (the "y-axis")
+
+  - Range is $(-90^{\circ}, 90^{\circ})$
+  
+  - Measures degrees from the equator $(0^{\circ})$
+  
+  - $(-90^{\circ}, 0^{\circ})$ = southern hemisphere 
+  
+  - $(0^{\circ}, 90^{\circ})$ = northern hemisphere 
+  
+--
+
+- __Longitude__: Measures East/West (the "x-axis")
+
+  - Range is $(-180^{\circ}, 180^{\circ})$
+  
+  - Measures degrees from the prime meridian $(0^{\circ})$ in Greenwich, England
+  
+  - $(-180^{\circ}, 0^{\circ})$ = eastern hemisphere
+  
+  - $(0^{\circ}, 180^{\circ})$ = western hemisphere
+
+
+---
+
+# Latitude and Longitude
+
+
+```{r, echo = FALSE, fig.align='center', out.width="80%"}
+knitr::include_graphics("https://c.tadst.com/gfx/1200x630/longitude-and-latitude-simple.png?1")
+```
+
+---
+
+# Map Projections
+
+- Earth is a 3D object, but maps are 2D objects
+
+- __Map projections__: Transformation of the lat / long coordinates on a sphere (the earth) to a 2D plane
+  
+- There are many different projections - each will distort the map in different ways.
+
+- The most common projections are:
+
+  - [Mercator](https://en.wikipedia.org/wiki/Mercator_projection)
+  - [Robinson](https://en.wikipedia.org/wiki/Robinson_projection)
+  - [Conic](http://www.geo.hunter.cuny.edu/~jochen/gtech201/lectures/lec6concepts/Map%20coordinate%20systems/Conic%20projections.htm#:~:text=Conic%20projections%20are%20created%20by,a%20developable%20map%20projection%20surface.)
+  - [Cylindrical](https://en.wikipedia.org/wiki/Map_projection#Cylindrical)
+  - [Planar](http://www.geo.hunter.cuny.edu/~jochen/gtech201/lectures/lec6concepts/Map%20coordinate%20systems/Planar%20projections.htm)
+  - [Interrupted projections](https://en.wikipedia.org/wiki/Interruption_(map_projection))
+
+
+---
+
+# Mercator Projection (1500s)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Mercator_projection_Square.JPG/700px-Mercator_projection_Square.JPG")
+```
+
+
+---
+
+# Mercator Projection (Tissot indicatrix)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Mercator_with_Tissot%27s_Indicatrices_of_Distortion.svg/700px-Mercator_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+
+---
+
+# Robinson Projection (Standard from 1963-1998)
+
+```{r, echo = FALSE, fig.align='center', out.width="70%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Robinson_projection_SW.jpg/700px-Robinson_projection_SW.jpg")
+```
+
+
+---
+
+# Robinson Projection (Tissot indicatrix)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="70%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Robinson_with_Tissot%27s_Indicatrices_of_Distortion.svg/700px-Robinson_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+
+---
+
+# Winkel Tripel Projection (proposed 1921, now the standard)
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Winkel_triple_projection_SW.jpg/660px-Winkel_triple_projection_SW.jpg")
+```
+
+---
+
+# Winkel Tripel Projection (Tissot indicatrix)
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Winkel_Tripel_with_Tissot%27s_Indicatrices_of_Distortion.svg/660px-Winkel_Tripel_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+---
+
+# And many more... (see [xkcd comic](https://xkcd.com/977/))
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://i.pinimg.com/originals/2d/03/cf/2d03cffa216afb23fa50fb07fc1221b1.jpg")
+```
+
+
+---
+
+## Visualizing spatial data on maps using [`ggmap`](https://cran.r-project.org/web/packages/ggmap/readme/README.html)
+
+.pull-left[
+
+```{r us-map, eval = FALSE}
+library(ggmap)
+# First, we'll draw a "box" around the US
+# (in terms of latitude and longitude)
+US <- c(left = -125, bottom = 10, 
+        right = -67, top = 49)
+map <- get_stamenmap(US, zoom = 5, 
+                     maptype = "toner-lite")
+
+# Visualize the basic map
+ggmap(map) #<<
+
+```
+
+- Draw map based on lat / lon coordinates
+
+- Put the box into `get_stamenmap()` to access [Stamen Maps](http://maps.stamen.com/#terrain/12/37.7706/-122.3782)
+
+- Draw the map using `ggmap()` to serve as base
+
+]
+
+.pull-right[
+```{r ref.label="us-map", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+---
+
+# Three main types of spatial data
+
+
+1. __Point Pattern Data__: lat-long coordinates where events have occurred
+
+2. __Point-Referenced data__: Latitude-longitude (lat-long) coordinates as well as one or more variables specific to those coordinates.
+
+3. __Areal Data__: Geographic regions with one or more variables associated with those regions.
+
+--
+
+- Each type is structured differently within a dataset
+
+- Each type requires a different kind of graph(s)
+
+---
+
+# Point-Pattern data
+
+- __Point Pattern Data__: lat-long coordinates where events have occurred
+
+- __Point pattern data simply records the lat-long of events__; thus, there are only two columns
+
+- Again, latitude and longitude are represented with dots, sometimes called a dot or bubble map.
+
+--
+
+- The goal is to understand how the __density__ of events varies across space
+
+- The density of the dots can also be visualized (e.g., with contours)
+
+  - __Use methods we've discussed before for visualizing 2D joint distribution__
+
+
+---
+
+# Point-Referenced data
+
+- __Point-Referenced data__: Latitude-longitude (lat-long) coordinates as well as one or more variables specific to those coordinates
+
+- Point-referenced data will have the following form:
+
+```{r}
+airports %>% dplyr::select(lat, lon, altitude, n_depart, n_arrive, name) %>% slice(1:3)
+```
+
+--
+
+- The goal is to understand how the variable(s) (e.g., `altitude`) vary across different spatial locations
+
+- Typically, the latitude and longitude are represented with dots, and the variable(s) are represented with size and/or colors
+
+---
+
+## Adding points to the map as usual
+
+.pull-left[
+
+```{r airport-points, eval = FALSE}
+ggmap(map) +
+  geom_point(data = airports, #<<
+             aes(x = lon, y = lat),
+             alpha = 0.25)
+```
+
+- Display locations of airports using `geom_point()` layer, need to specify `data` for layer
+
+- Currently viewing __point-pattern__ data 
+
+]
+
+.pull-right[
+```{r ref.label="airport-points", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+
+---
+
+## Altering points on the map (in the usual way)
+
+.pull-left[
+
+```{r airport-points-plus, eval = FALSE}
+ggmap(map) +
+  geom_point(data = airports, 
+             aes(x = lon, y = lat, 
+                 size = sqrt(n_depart), #<<
+                 color = sqrt(n_arrive)), #<<
+             alpha = .5) +
+  scale_size_area(breaks = sqrt(c(1, 5, 10, 50, 100, 500)), 
+                  labels = c(1, 5, 10, 50, 100, 500), 
+                  name = "# departures") +
+  scale_color_distiller(palette = "Spectral") +
+  labs(color = "sqrt(# arrivals)") +
+  theme(legend.position = "bottom")
+```
+
+
+- Displaying additional variables through `aes`
+
+
+]
+
+.pull-right[
+```{r ref.label="airport-points-plus", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+---
+
+## Thinking about areal data
+
+- __Areal Data__: Geographic regions associated with one or more variables specific to those regions
+
+- Areal data will have the following form (example US states data from 1970s):
+
+```{r, echo = FALSE}
+library(datasets)
+state_names <- rownames(state.x77)
+state_data <- as_tibble(state.x77)
+state_data <- state_data %>%
+  mutate(state = state_names) %>%
+  mutate(state = tolower(state))
+```
+
+```{r}
+state_data %>% dplyr::slice(1:3)
+```
+
+
+--
+
+- Need to match the region with the actual geographic boundaries
+
+- Many geographic boundaries/features are stored as "shapefiles"
+
+  - i.e., complicated polygons
+  
+- Can contain the lines, points, etc. to represent any geographic feature
+
+- Shapefiles are readily available for countries, states, counties, etc.
+
+
+---
+
+## Access shapefiles using `map_data()` 
+
+.pull-left[
+
+```{r}
+library(maps)
+state_borders <- map_data("state") 
+head(state_borders)
+```
+
+- For example: `map_data("world")`, `map_data("state")`, `map_data("county")` (need to install [`maps` package](https://cran.r-project.org/web/packages/maps/maps.pdf))
+
+- Contains lat/lon coordinates to draw geographic boundaries
+
+]
+
+--
+
+.pull-right[
+
+- Typical workflow for plotting areal data (e.g., using states):
+
+  - Get state-specific data
+  
+  - Get state boundaries
+  
+  - Merge state-specific data with state boundaries (using `left_join()`)
+  
+```{r}
+state_plot_data <- state_borders %>%
+  left_join(state_data, #<<
+            by = c("region" = "state")) #<<
+```
+  
+  
+  - Then plot the data
+
+]
+
+---
+
+## Create a choropleth map with `geom_polygon()`
+
+.pull-left[
+
+```{r choropleth, eval = FALSE}
+state_plot_data %>%
+  ggplot() + 
+  geom_polygon(aes(x = long, y = lat, #<<
+                   group = group, #<<
+                   fill = Illiteracy), #<<
+               color = "black") + #<<
+  scale_fill_gradient2(
+    low = "darkgreen",
+    mid = "lightgrey", 
+    high = "darkorchid4",
+    midpoint = 0.95) +
+  theme_void() +
+  coord_map("polyconic") + #<<
+  labs(fill = "Illiteracy %") + 
+  theme(legend.position = "bottom")
+```
+
+
+]
+.pull-right[
+```{r ref.label="choropleth", fig.height=7, echo = FALSE}
+
+```
+
+]
+
+---
+
+## Uniform size with [`statebins`](https://github.com/hrbrmstr/statebins)
+
+.pull-left[
+
+```{r bin-map, eval = FALSE}
+library(statebins)
+state_data$new_state <- 
+  str_to_title(state_data$state)
+statebins(state_data = state_data, #<<
+          state_col = "new_state",
+          value_col = "Illiteracy") +
+  theme_statebins()
+
+```
+
+- Make all states equal in size
+
+- Keeps spatial arrangement but focus is on the variable of interest displayed by the color
+
+]
+
+.pull-right[
+```{r ref.label="bin-map", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+
+---
+class: center, middle
+
+# Next time: Visualizing text data
+
+__HW5 due Wednesday! Graphics Critique / Replication #2 due Friday Oct 7th!__ 
+
+Recommended reading: 
+
+[CW Chapter 15 Visualizing geospatial data](https://clauswilke.com/dataviz/geospatial-data.html)
+
+[KH Chapter 7 Draw Maps](https://socviz.co/maps.html#maps)
+
+
+

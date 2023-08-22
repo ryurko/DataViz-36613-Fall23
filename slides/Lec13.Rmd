@@ -1,0 +1,259 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "Extras with htmlwidgets and Dashboards"  
+author: 
+  - "Professor Ron Yurko"
+date: '10/12/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec11/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(palmerpenguins)
+data(penguins)
+```
+
+
+# REMINDER: Please fill out the FCE!
+
+#### Faculty course evaluations (FCEs) are out now
+
+#### I take feedback very seriously and I want the course to be useful!
+
+#### If you enjoyed this class, please fill out the FCE.
+
+#### If you didn’t enjoy this class, please fill out the FCE.
+
+
+---
+
+## A bridge between `R` and JavaScript
+
+-  JavaScript enables web developers to create __client-side__ web applications
+
+  - Computations are happening __in the client's browser__, instead of the host's web servers
+  
+- `D3` (or `D3.js`) is the most popular JavaScript library for client-side dynamic data visualizations
+
+  - `D3` == 'data-driven documents'
+
+--
+
+- RStudio developers created the [`htmlwidgets`](http://www.htmlwidgets.org/index.html) enabling `R` users to use `D3` without needing to learn JavaScript!
+
+- Renders data visualizations in HTML using `D3` wrappers
+
+  - [Incredible gallery with a variety of uses](http://gallery.htmlwidgets.org/), including a chess package called [`rchess`](http://jkunst.com/rchess/)!
+  
+---
+
+## [Leaflet](https://rstudio.github.io/leaflet/): interactive HTML maps
+
+.pull-left[
+
+```{r cmu-map, eval = FALSE}
+cmu <- 
+  tibble(address = "Carnegie Mellon University, Pittsburgh, PA") %>%
+  tidygeocoder::geocode(address, method = "osm") #<<
+
+library(leaflet)
+leaflet() %>% addTiles() %>% #<<
+  addMarkers(data = cmu) #<<
+```
+
+- `addTiles()`: builds layer with static map (default from OpenStreetMap)
+
+- `addMarkers()`: add marker at point location, e.g., CMU
+
+- Use [`tidygeocoder`](https://cran.r-project.org/web/packages/tidygeocoder/vignettes/tidygeocoder.html) for spatial queries
+
+
+]
+
+.pull-right[
+
+```{r ref.label="cmu-map", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+
+
+
+]
+
+---
+
+## [DataTables (DT) package](https://rstudio.github.io/DT/) for interactive tables
+
+```{r, fig.align='center', out.width="80%"}
+library(DT)
+datatable(penguins[, 1:6], options = list(pageLength = 5)) #<<
+```
+
+
+
+---
+
+## Interactive plots with [Plotly](https://plotly.com/r/)
+
+.pull-left[
+
+- Start with an initial plain plot
+
+```{r plain-plot, eval = FALSE}
+scatter_plain <- penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, 
+             color = species)) +
+  geom_point(alpha = 0.5, size = 2) +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+scatter_plain
+```
+
+
+]
+.pull-right[
+
+```{r ref.label="plain-plot", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+
+
+]
+
+---
+
+## Interactive plots with [Plotly](https://plotly.com/r/)
+
+.pull-left[
+
+- Make it interactive with `ggplotly`
+
+```{r go-plotly, eval = FALSE}
+library(plotly)
+ggplotly(scatter_plain)
+```
+
+- `plotly` has its own plotting syntax, but we can just use `ggplot2` instead 
+
+  - there will be some annoying differences at times, so just be careful
+  
+- Several ways to interact: filter, zoom, and view additional info by hovering over the points with tooltip...
+
+]
+.pull-right[
+
+```{r ref.label="go-plotly", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+]
+
+---
+
+## Customize the tooltip
+
+.pull-left[
+
+- Update to include `text` with penguin's `sex`
+
+```{r tool-plotly, eval = FALSE}
+scatter_upd <- penguins %>% 
+  ggplot(aes(x = body_mass_g, y = bill_length_mm, 
+             color = species,
+             text = paste("sex:", sex))) + #<<
+  geom_point(alpha = 0.5, size = 2) +
+  labs(x = "Body Mass (g)", y = "Bill Length (mm)") +
+  theme_bw()
+
+ggplotly(scatter_upd, 
+         tooltip = c("text", "species")) #<<
+```
+
+- We can specify what is included in the tooltip when hovering over the points
+
+]
+.pull-right[
+
+```{r ref.label="tool-plotly", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+
+]
+
+---
+
+# Putting it all together with dashboards
+
+- Dashboards are popular way to make data and visualizations available to clients, managers, stakeholders, etc. to help with decision making
+
+- Typically include a mix of graphics and text, depending on the context 
+
+--
+
+- Can easily make HTML dashboards using the [`flexdashboard`](https://pkgs.rstudio.com/flexdashboard/) package
+
+  - Provide interactive capabilities within an HTML file (i.e., you can email this!)
+  
+  - __These are NOT fully interactive like Shiny apps__
+  
+  - [You can use Shiny within `flexdashboard`](https://pkgs.rstudio.com/flexdashboard/articles/shiny.html) but it requires a Shiny server
+  
+  - Another option is [`shinydashboard`](https://rstudio.github.io/shinydashboard/)
+  
+- Outside of `R`, [Tableau](https://public.tableau.com/app/discover) is a popular tool (can use free Tableau Public version)
+
+
+---
+class: center, middle
+
+# DO IT LIVE
+
+---
+class: center, middle
+
+# Final Report due Friday Oct 14th by 5 PM EDT via email! (just one per group)
+
+Recommended reading: 
+
+[Modern Data Science with R: CH 14 Dynamic and customized data graphics](https://mdsr-book.github.io/mdsr2e/ch-vizIII.html)
+
+[`plotly` resources](https://plotly.com/r/)
+
+[`htmlwidgets` gallery](http://gallery.htmlwidgets.org/)
+
+
+
+

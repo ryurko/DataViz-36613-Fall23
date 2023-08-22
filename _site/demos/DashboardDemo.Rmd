@@ -1,0 +1,53 @@
+---
+title: "Flexdashboard example (more penguins!)"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(palmerpenguins)
+library(tidyverse)
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Interactive plot
+
+```{r}
+plain_plot <- penguins %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point() +
+  ggthemes::scale_color_colorblind() +
+  theme_bw()
+plotly::ggplotly(plain_plot)
+```
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+
+### Interactive table
+
+```{r}
+DT::datatable(penguins)
+```
+
+### Nice looking summary stats...
+
+```{r}
+roundval <- 2
+cleanmean <- function(x, roundval = 2, na.rm = TRUE) {
+  return(round(mean(x, na.rm = na.rm), digits = roundval))
+}
+summarystat <- penguins %>%
+  group_by(species) %>%
+  summarize(
+    `Average bill length (mm)` = cleanmean(bill_length_mm),
+    `Average bill depth (mm)` = cleanmean(bill_depth_mm)
+  )
+knitr::kable(summarystat)
+```

@@ -1,0 +1,212 @@
+---
+title: "Principal Component Analysis"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+# PCA using Starbucks Dataset
+
+***
+
+###  The graphs below don't have proper titles, axis labels, legends, etc.  Please take care to do this on your own graphs.
+
+***
+
+Throughout this demo we will again use the dataset about Starbucks drinks available in the [#TidyTuesday project](https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-12-21/readme.md).
+
+You can read in and manipulate various columns in the dataset with the following code:
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+starbucks <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv") %>%
+  # Convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g),
+         fiber_g = as.numeric(fiber_g))
+```
+
+
+We will apply __principal component analysis (PCA)__ to the quantitative variables in this dataset:
+
+```{r}
+# Select the variables of interest:
+starbucks_quant_data <- starbucks %>%
+  dplyr::select(serv_size_m_l:caffeine_mg)
+dim(starbucks_quant_data)
+```
+
+As seen above, there are 11 quantitative variables in the dataset, and it's difficult to visualize 11 quantitative variables simultaneously. Maybe we can "get away" with just plotting two dimensions that make up the majority of the variation among these 11 variables (i.e., the first two principal components).
+
+To conduct PCA, you must center and standardize your variables. We can either do that manually with the `scale()` function:
+
+```{r}
+scaled_starbucks_quant_data <- scale(starbucks_quant_data)
+```
+
+Or we can tell `R` do that for us before performing PCA using the `prcomp()` function:
+
+```{r}
+#perform PCA
+starbucks_pca <- prcomp(starbucks_quant_data, 
+                        # Center and scale variables:
+                        center = TRUE, scale. = TRUE)
+# This is equivalent to the following commented out code:
+# starbucks_pca <- prcomp(scaled_starbucks_quant_data, 
+#                         center = FALSE, scale. = FALSE)
+# View the summary
+summary(starbucks_pca)
+```
+
+There are 11 variables in this dataset, and thus there are 11 principal components. However, we can see that the first principal component accounts for over half of the variation in the dataset(!), while the second accounts for about 15% of the variation. As we can see, the variation accounted by each component adds up to the total variation in the data (i.e., the "cumulative proportion" equals 100% in the PC11 column). Also, in the first row, we can see that $\text{Var}(Z_1) > \text{Var}(Z_2) > \cdots > \text{Var}(Z_{11})$, as expected given what we talked about in lecture.
+
+We haven't actually computed the principal components $Z_1,\dots,Z_{11}$ yet. In brief, PCA provides a $p \times p$ "rotation matrix," and the matrix $\boldsymbol{Z} = (Z_1,\dots,Z_{11})$ is equal to the original data matrix $X$ times the rotation matrix. The `prcomp()` function returns us the result of this matrix multiplication: the matrix of the __principal component scores__ $\boldsymbol{Z} = (Z_1,\dots,Z_{11})$ which can be accessed in the following way:
+
+```{r}
+starbucks_pc_matrix <- starbucks_pca$x
+head(starbucks_pc_matrix)
+```
+
+We could have manually computed this using the returned `rotation` matrix and the original data (but centered and scaled). You perform matrix multiplication in `R` using the `%*%` operator:
+
+```{r}
+manual_starbucks_pc_matrix <- 
+  as.matrix(scaled_starbucks_quant_data) %*% starbucks_pca$rotation
+head(manual_starbucks_pc_matrix)
+```
+
+As you can see from just the first so many rows, these matrices match. If we view the dimensionality of this matrix (just the one returned to us by `prcomp`), we can seee that it matches the dimensionality of the original dataset:
+
+```{r}
+dim(starbucks_pc_matrix)
+```
+
+Indeed, it is literally an 11-dimensional rotation of our dataset. However, the first column of this matrix accounts for over half of the variation in the data and the second column accounts for over 15% of the variation, so maybe we can "get away" with plotting just those first two dimensions.
+
+To recreate what the `summary` output of `prcomp` function gave us above, the following line of code computes the standard deviation of each $Z$ (the numbers match what's given in the first row of numbers above):
+
+```{r}
+apply(starbucks_pc_matrix, MARGIN = 2, FUN = sd)
+```
+
+This corresponds to the _singular values_, i.e., $\sqrt{\lambda_j}$. We can then compute the proportion of variance explained by each component (also displayed in the `summary` output) by squaring these values and dividing by the number of columns:
+
+```{r}
+# Note that I can just replace the sd function above with the var function
+apply(starbucks_pc_matrix, MARGIN = 2, FUN = var) / 
+  ncol(starbucks_pc_matrix)
+```
+
+The plot below displays the first two PCs $Z_1$ and $Z_2$:
+
+```{r}
+# First add these columns to the original dataset:
+starbucks <- starbucks %>%
+  mutate(pc1 = starbucks_pc_matrix[,1], 
+         pc2 = starbucks_pc_matrix[,2])
+starbucks %>%
+  ggplot(aes(x = pc1, y = pc2)) +
+  geom_point(alpha = 0.25) +
+  labs(x = "PC 1", y = "PC 2")
+```
+
+__This matches what we saw returned by MDS!__
+
+However, the components by themselves aren't very interpretable - how do they relate to original variables? At this point, it's important to remember that __the principal components are linear combinations of the original variables__. So, there is a (deterministic) linear relationship between the original variables and the principal components that we are plotting here.
+
+Using the popular `R` package [`factoextra`](http://www.sthda.com/english/wiki/factoextra-r-package-easy-multivariate-data-analyses-and-elegant-visualization), we can plot these linear relationships on top of the scatterplot. We can do so using what's called a __biplot__, which is essentially just a fancy expression for "scatterplots with arrows on top". After installing the `factoextra` package, we can create the biplot using the `fviz_pca_biplot()` function on the `prcomp` output directly (but with the observation labels turned off!):
+
+```{r}
+# install.packages("factoextra")
+library(factoextra)
+# Designate to only label the variables:
+fviz_pca_biplot(starbucks_pca, label = "var", 
+                # Change the alpha for the observations - 
+                # which is represented by ind
+                alpha.ind = .25,
+                # Modify the alpha for the variables (var):
+                alpha.var = .75,
+                # Modify the color of the variables
+                col.var = "darkblue")
+```
+
+
+The above plot tells us a lot of information:
+
++ The direction of a particular arrow is indicative of "as this variable increases...." For example, the far left arrow for `caffeine_mg` suggests that, as `caffeine_mg` increases, $Z_1$ and $Z_2$ tend to decrease (in other words, within the definition of $Z_1$ and $Z_2$, the coefficient for `caffeine_mg` is negative; this is verified below). You can contrast this with `serv_size_m_l` which is pointing to the upper right, indicating that as `serv_size_m_l` increases then both $Z_1$ and $Z_2$ tend to increase.
++ The angle of the different vectors is also indicative of the correlation between different variables. If two vectors are at a right angle (90 degrees), that suggests that they are uncorrelated, e.g., `serv_size_m_l` and `saturated_fag_g`. If two vectors are in similar directions (i.e., their angle is less than 90 degrees), that suggests that they are positively correlated, e.g., `sugar_g` and `total_carbs_g`. If two vectors are in different directions (i.e., their angle is greater than 90 degrees), that suggests that they are negatively correlated, e.g., `caffeine_mg` and `calories`.
++ The length of the lines also indicate how strongly related the principal components are with the individual variables. For example, `serv_size_m_l` has a fairly long line because it has a large positive coefficient for $Z_1$ in the rotation matrix (see below). Meanwhile, `caffeine_mg` has a relatively short arrow because its coefficients are relatively small.
+
+For reference, the below code shows the rotation matrix we used to create the $Z$s. You'll see that the directions of the vectors in the above plot are the first two columns of this matrix. 
+
+```{r}
+starbucks_pca$rotation
+```
+
+In the above example, we plotted the first two principal components; thus, implicitly, we have chosen $k = 2$, the only reason being that it is easy to visualize. However, how many principal components should we actually be using?
+
+There is a common visual used to answer this question, but first let's build some intuition. We already know that $Z_1$ accounts for the most variation in our data, $Z_2$ accounts for the next most, and so on. Thus, each time we add a new principal component dimension, we capture a "higher proportion of the information in the data," but that increase in proportion *decreases* for each new dimension we add. (You may have to read those last two sentences a few times to get what I mean.) Thus, in practice, it is recommended to keep adding principal components until the marginal gain "levels off," i.e., decreases to the point that it isn't too beneficial to add another dimension to the data.
+
+This trade-off between dimensions and marginal gain in information is often inspected visually using a [scree](https://en.wikipedia.org/wiki/Scree) plot, or what is more commonly known as an elbow plot. In an elbow plot, the x-axis has the numbers $1,2,\dots,p$ (i.e., the dimensions in the data), and the y-axis has the proportion of variation that the particular principal component $Z_j$ accounts for. We can construct the scree plot using the `fviz_screeplot()` function from `factoextra
+
+```{r}
+fviz_eig(starbucks_pca, addlabels = TRUE) # Add the labels 
+```
+
+The graphical rule-of-thumb is to then look for the "elbow," i.e., where the proportion of variation starts to become flat. Unfortunately there is not a definitive "this is the elbow for sure" rule, and it is up to your judgment. Another useful rule-of-thumb is to consider drawing a horizontal line at 1 divided by the number of variables in your original dataset. __Why do you think that is a useful rule?__ We easily do this because `factoextra` generates `ggplot` objects, so we can add another geometric layer corresponding to our reference:
+
+
+```{r}
+fviz_eig(starbucks_pca, addlabels = TRUE) +
+  # Have to multiply by 100 to get on percent scale
+  geom_hline(yintercept = 100 * (1 / ncol(starbucks_quant_data)),
+             linetype = "dashed", color = "darkred")
+```
+
+
+Based on this plot, I think there's a strong argument to stop at $k = 3$ (but maybe go up to $k = 5$ for another substantial drop in the elbow). 
+
+Let's say we decide $k = 3$. This means that we should use the first three principal components in our graphics and other analyses in order for a "satisfactory" amount of the variation in the data to be captured. Our above visual only plots the first two principal components, and so we are "hiding" some data information that we are better off plotting in some way if possible (specifically, we are hiding about 30% of the information, i.e., the total amount of information captured by principal components 3, 4, ..., 11, and about a third of this remaining information is captured by that third component that we are not plotting). This means that, theoretically, we should plot three quantitative variables, and we've discussed a bit about how to do this - you could use the size of points, transparency, or even a 3D scatterplot if you wanted to - but we are not going to explore that further here. Alternatively, you could just make three scatterplots (one for each pair of principal components).
+
+If you're having issues with the `factoextra` package then you can easily remake the 
+scree plot manually. All we need to do is grab the proportion of variance explained by each
+component, turn it into a table, and then display it in some way. We already computed these values earlier in the demo, but we also just grab the singular values directly provided to us by `R`:
+
+```{r}
+# Manual creation of elbow plot, start by computing the eigenvalues and dividing by
+# the total variance in the data:
+tibble(prop_var = (starbucks_pca$sdev)^2 / ncol(starbucks_quant_data)) %>%
+  # Add a column for the PC index:
+  mutate(pc_index = 1:n()) %>%
+  # Now make the plot!
+  ggplot(aes(x = pc_index, y = prop_var)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.75) +
+  geom_point(color = "black", size = 2) +
+  geom_line() +
+  # Add the horizontal reference line:
+  geom_hline(yintercept = (1 / ncol(starbucks_quant_data)),
+             linetype = "dashed", color = "darkred") +
+  # And label:
+  labs(x = "Dimensions", y = "Proportion of explained variance") +
+  theme_bw()
+```
+
+Making a biplot from scratch is much more difficult... Instead, you can try the [`ggfortify` package](https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html) (which is useful for making model diagnostic plots). The following code demonstrates how to do this (after you installed `ggfortify`):
+
+```{r}
+# install.packages("ggfortify")
+library(ggfortify)
+autoplot(starbucks_pca, 
+         data = starbucks_quant_data,
+         alpha = 0.25,
+         loadings = TRUE, loadings.colour = 'darkblue',
+         loadings.label.colour = 'darkblue',
+         loadings.label = TRUE, loadings.label.size = 3,
+         loadings.label.repel = TRUE) +
+  theme_bw()
+```
+
+
+
+
+
+

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## Density Estimation
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 9/14/2022
+]
+
+---
+
+
+
+
+
+
+
+
+
+## Simulate data from mixture of Normal distributions
+
+
+Will sample 100 draws from `\(N(-1.5, 1)\)` and 100 draws from `\(N(1.5, 1)\)`
+
+&lt;img src="figs/Lec5/unnamed-chunk-2-1.png" width="100%" /&gt;
+
+---
+
+# Revisit histograms
+
+.pull-left[
+
+
+```r
+set.seed(2020)
+fake_data &lt;- 
+  tibble(fake_x = c(rnorm(100, -1.5), 
+                    rnorm(100, 1.5))) %&gt;%
+  mutate(component = 
+           c(rep("left", 100), 
+             rep("right", 100)))
+
+fake_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+  geom_histogram() +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+- Default histogram with 30 bins...
+
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-3-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## What happens as we change the number of bins?
+
+
+.pull-left[
+
+- Decrease it to 15 bins
+
+
+
+```r
+fake_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+* geom_histogram(bins = 15) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+&lt;img src="figs/Lec5/hist2-1.png" width="100%" /&gt;
+
+
+]
+
+--
+
+.pull-right[
+
+- Increase it to 60 bins
+
+
+```r
+fake_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+* geom_histogram(bins = 60) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+&lt;img src="figs/Lec5/hist3-1.png" width="100%" /&gt;
+]
+
+---
+
+## What happens as we change the number of bins?
+
+
+.pull-left[
+
+- Decrease it to 5 bins
+
+
+
+```r
+fake_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+* geom_histogram(bins = 5) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+&lt;img src="figs/Lec5/hist4-1.png" width="100%" /&gt;
+
+
+]
+
+--
+
+.pull-right[
+
+- Increase it to 100 bins
+
+
+```r
+fake_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+* geom_histogram(bins = 100) +
+  scale_x_continuous(limits = c(-5, 5))
+```
+
+&lt;img src="figs/Lec5/hist5-1.png" width="100%" /&gt;
+]
+
+---
+
+## Variability of graphs - 30 bins
+
+.pull-left[
+
+- First sample with 30 bins...
+
+&lt;img src="figs/Lec5/unnamed-chunk-4-1.png" width="100%" /&gt;
+
+
+]
+
+.pull-right[
+
+- __What happens with a different sample?__
+
+&lt;img src="figs/Lec5/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Variability of graphs - 15 bins
+
+.pull-left[
+
+- First sample with 15 bins...
+
+&lt;img src="figs/Lec5/unnamed-chunk-6-1.png" width="100%" /&gt;
+
+
+]
+
+.pull-right[
+
+- __What happens with a different sample?__
+
+&lt;img src="figs/Lec5/unnamed-chunk-7-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Variability of graphs - too few bins
+
+.pull-left[
+
+- __High bias__
+
+&lt;img src="figs/Lec5/unnamed-chunk-8-1.png" width="100%" /&gt;
+
+
+]
+
+
+.pull-right[
+
+- __Low variance__
+
+&lt;img src="figs/Lec5/unnamed-chunk-9-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Variability of graphs - too many bins
+
+.pull-left[
+
+- __Low bias__
+
+&lt;img src="figs/Lec5/unnamed-chunk-10-1.png" width="100%" /&gt;
+
+
+]
+
+.pull-right[
+
+- __High variance__
+
+&lt;img src="figs/Lec5/unnamed-chunk-11-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Back to penguins...
+
+.pull-left[
+
+- We make __histograms__ with [`geom_histogram()`](https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+
+
+```r
+penguins %&gt;%
+* ggplot(aes(x = flipper_length_mm)) +
+* geom_histogram()
+```
+
+
+- __Pros__:
+  - Displays full shape of distribution
+  - Easy to interpret and see sample size
+
+- __Cons__:
+  - Have to choose number of bins and bin locations
+  - You can make a bad histogram
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-12-1.png" width="100%" /&gt;
+]
+
+---
+
+# What about displaying conditional distributions?
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+* geom_histogram(aes(fill = species))
+```
+
+  - Display conditional distribution of `flipper_length_mm` | `species`, i.e., `x` | `fill`
+  
+  - Default behavior is to __stack__ histograms
+  
+  - __What distribution is easy to see here?__
+  
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-13-1.png" width="100%" /&gt;
+]
+
+---
+
+# What about displaying conditional distributions?
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_histogram(aes(fill = species),
+*                position = "identity",
+*                alpha = 0.3)
+```
+
+  - Can change to overlay histograms
+  
+  - Modify the `position` to be `identity`
+  
+  - Need to adjust transparency with `alpha`
+  
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-14-1.png" width="100%" /&gt;
+]
+
+---
+
+# Normalize histogram frequencies with density values
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_histogram(
+*   aes(y = after_stat(density),
+        fill = species),
+    position = "identity", 
+    alpha = 0.3) 
+```
+
+- Total area under the bars equals to 1
+
+- Area of any bar is height `\(\times\)` width `\(=\)` density `\(\times\)` width
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-15-1.png" width="100%" /&gt;
+]
+
+
+---
+
+## Use density curves instead for comparison
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+* geom_density(aes(color = species))
+```
+
+  - Much easier to overlay for comparisons
+  
+  - Uses minimal amount of ink
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-16-1.png" width="100%" /&gt;
+]
+
+---
+
+## We do NOT fill the density curves
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+  geom_density(aes(fill = species),
+*              alpha = .3)
+```
+
+  - __Unnecessary ink!__
+  
+  - Fill will be overwhelming with several categorical levels
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-17-1.png" width="100%" /&gt;
+]
+
+
+
+---
+
+### How do histograms relate to the PDF and CDF?
+
+__Remember__: we use the __probability density function (PDF)__ to provide a __relative likelihood__
+
+--
+- PDF is the __derivative__ of the cumulative distribution function (CDF)
+
+
+--
+- Histograms approximate the PDF with bins, and __points are equally likely within a bin__
+
+.pull-left[
+&lt;img src="figs/Lec5/unnamed-chunk-18-1.png" width="100%" /&gt;
+]
+.pull-right[
+&lt;img src="figs/Lec5/ecdf-1.png" width="100%" /&gt;
+
+]
+
+
+--
+__What can say about the relative likelihood of data we have not observed?__
+
+---
+
+## Kernel density estimation
+
+__Goal__: estimate the PDF `\(f(x)\)` for all possible values (assuming it is continuous / smooth)
+
+--
+
+$$
+\text{Kernel density estimate: } \hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
+$$
+
+--
+- `\(n =\)` sample size, `\(x =\)` new point to estimate `\(f(x)\)` (does NOT have to be in dataset!)
+
+
+--
+- `\(h =\)` __bandwidth__, analogous to histogram bin width, ensures `\(\hat{f}(x)\)` integrates to 1
+
+- `\(x_i =\)` `\(i\)`th observation in dataset
+
+
+--
+- `\(K_h(x - x_i)\)` is the __Kernel__ function, creates __weight__ given distance of `\(i\)`th observation from new point 
+  - as `\(|x - x_i| \rightarrow \infty\)` then `\(K_h(x - x_i) \rightarrow 0\)`, i.e. further apart `\(i\)`th row is from `\(x\)`, smaller the weight
+  
+  - as __bandwidth__ `\(h \uparrow\)` weights are more evenly spread out (as `\(h \downarrow\)` more concentrated around `\(x\)`) 
+
+  - typically use [__Gaussian__ / Normal](https://en.wikipedia.org/wiki/Normal_distribution) kernel: `\(\propto e^{-(x - x_i)^2 / 2h^2}\)`
+  
+  - `\(K_h(x - x_i)\)` is large when `\(x_i\)` is close to `\(x\)`
+  
+
+---
+
+## [Wikipedia example](https://en.wikipedia.org/wiki/Kernel_density_estimation)
+
+.center[![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Comparison_of_1D_histogram_and_KDE.png/1000px-Comparison_of_1D_histogram_and_KDE.png)]
+  
+---
+
+## We display __kernel density estimates__ with [`geom_density()`](https://ggplot2.tidyverse.org/reference/geom_density.html)
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+* geom_density() +
+  theme_bw()
+```
+
+- __Pros__:
+  - Displays full shape of distribution
+  - Can easily layer
+  - Add categorical variable with color
+
+- __Cons__:
+  - Need to pick bandwidth and kernel...
+  
+]
+.pull-right[
+&lt;img src="figs/Lec5/unnamed-chunk-19-1.png" width="100%" /&gt;
+]
+
+---
+
+## Choice of [kernel?](https://en.wikipedia.org/wiki/Kernel_(statistics)
+
+&lt;img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Kernels.svg/1000px-Kernels.svg.png" width="70%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## What about the bandwidth? 
+
+Use __Gaussian reference rule__ (_rule-of-thumb_) `\(\approx 1.06 \cdot \sigma \cdot n^{-1/5}\)`, where `\(\sigma\)` is the observed standard deviation
+
+Modify the bandwidth using the `adjust` argument - __value to multiply default bandwidth by__
+
+.pull-left[
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+* geom_density(adjust = 0.5) +
+  theme_bw()
+```
+
+&lt;img src="figs/Lec5/curve-noisy-1.png" width="100%" /&gt;
+
+  
+]
+.pull-right[
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm)) + 
+* geom_density(adjust = 2) +
+  theme_bw()
+```
+
+&lt;img src="figs/Lec5/curve-smooth-1.png" width="100%" /&gt;
+]
+
+---
+
+## CAUTION: dealing with bounded data...
+
+.pull-left[
+
+
+```r
+set.seed(101)
+bound_data &lt;- tibble(fake_x = runif(100))
+
+bound_data %&gt;%
+  ggplot(aes(x = fake_x)) +
+  geom_density() +
+* geom_rug(alpha = 0.5) +
+  stat_function(data = 
+                  tibble(fake_x = c(0, 1)),
+                fun = dunif, color = "red") +
+  scale_x_continuous(limits = c(-.5, 1.5))
+```
+
+- Use `geom_rug()` to display raw data points
+
+- __Observe density estimates for impossible values!__
+
+- Proposed solutions based on [reflecting](https://github.com/tidyverse/ggplot2/issues/3387)
+
+- Check out [`evmix` package for more information](https://www.jstatsoft.org/article/view/v084i05)
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-21-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Alternative density-based option: violin plots
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+* geom_violin() +
+  coord_flip()
+```
+
+- __Pros__:
+  - Displays full shape of distribution
+  
+  - Can easily layer...
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Mirror image is duplicate information...
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-22-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Alternative density-based option: violin plots
+
+.pull-left[
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+  geom_violin() + 
+* geom_boxplot(width = .2) +
+  coord_flip()
+```
+
+- __Pros__:
+
+  - Displays full shape of distribution
+  
+  - __Can easily layer with box plots on top__
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Mirror image is duplicate information...
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-23-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Alternative density-based option: ridge plots
+
+.pull-left[
+
+- Available with [`ggridges` package](https://cran.r-project.org/web/packages/ggridges/vignettes/introduction.html)
+
+
+```r
+library(ggridges)
+penguins %&gt;%
+  ggplot(aes(x = flipper_length_mm, 
+*            y = species)) +
+* geom_density_ridges(rel_min_height = 0.01)
+```
+
+- __Pros__:
+
+  - Drops the mirror image of violins
+  
+  - Useful for many categorical levels (especially ordinal data)
+  
+- __Cons__:
+
+  - Inherits same problems as density curves
+  
+  - Be careful with overlap...
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-24-1.png" width="100%" /&gt;
+
+]
+
+---
+
+
+## Alternative data-based option: beeswarm plots
+
+.pull-left[
+
+- Available with [`ggbeeswarm` package](https://github.com/eclarke/ggbeeswarm)
+
+
+
+```r
+library(ggbeeswarm)
+penguins %&gt;%
+  ggplot(aes(x = species, 
+             y = flipper_length_mm)) +
+* geom_beeswarm(cex = 1.5) +
+  coord_flip()
+```
+
+- __Pros__:
+
+  - Displays full shape of distribution
+  
+  - Displays each data point individually
+  
+- __Cons__:
+
+  - Which algorithm for arranging points?
+  
+  - __What's another major disadvantage?__
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec5/unnamed-chunk-25-1.png" width="100%" /&gt;
+
+]
+
+---
+class: center, middle
+
+# Next time: 2D Quantitative Data
+
+Reminder: __HW2 due tonight!__ __Graphics critique/replication due Friday!__
+
+Recommended reading: 
+
+[CW Chapter 7 Visualizing distributions: Histograms and density plots](https://clauswilke.com/dataviz/histograms-density-plots.html)
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

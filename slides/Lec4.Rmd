@@ -1,0 +1,377 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "1D Quantitative Data"  
+author: 
+  - "Professor Ron Yurko"
+date: '9/12/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec4/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+```{r, include = FALSE}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+
+# 1D quantitative data
+
+Observations are collected into a vector $(x_1, \dots, x_n)$, $x_i \in \mathbb{R}$ (or maybe $\mathbb{R}^+$, $\mathbb{Z}$)
+
+Common __summary statistics__ for 1D quantitative data:
+
+--
+
++ __Center__: Mean, median, weighted mean, mode
+
+  + Related to the first moment, i.e., $\mathbb{E}[X]$
+  
+--
+
++ __Spread__: Variance, range, min/max, quantiles, IQR
+
+  + Related to the second moment, i.e., $\mathbb{E}[X^2]$
+  
+--
+
++ __Shape__: symmetry, skew, kurtosis ("peakedness")
+
+  + Related to higher order moments, i.e., skewness is $\mathbb{E}[X^3]$, kurtosis is $\mathbb{E}[X^4]$
+  
+--
+
+Compute various statistics with `summary()`, `mean()`, `median()`, `quantile()`, `range()`, `sd()`, `var()`, etc.
+
+---
+
+## Box plots visualize summary statistics
+
+.pull-left[
+
+- We make a __box plot__ with [`geom_boxplot()`](https://ggplot2.tidyverse.org/reference/geom_boxplot.html)
+
+
+```{r boxplot, eval = FALSE}
+penguins %>%
+  ggplot(aes(y = flipper_length_mm)) + #<<
+  geom_boxplot(aes(x = "")) + #<<
+  coord_flip() #<<
+```
+
+- __Pros__:
+  - Displays outliers, percentiles, spread, skew
+  - Useful for side-by-side comparison 
+
+- __Cons__:
+  - Does not display the full distribution shape!
+  - Missing some summary stats potentially
+  - Stresses middle portion
+  
+_Why use `aes(x = "")` inside `geom_boxplot()`?_
+
+]
+.pull-right[
+```{r ref.label = 'boxplot', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+## Histograms display 1D continuous distributions
+
+.pull-left[
+
+- We make __histograms__ with [`geom_histogram()`](https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+
+```{r histogram, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + #<<
+  geom_histogram() #<<
+```
+
+
+$$
+\text{# total obs.} = \sum_{b=1}^B \text{# obs. in bin }b
+$$
+
+- __Pros__:
+  - Displays full shape of distribution
+  - Easy to interpret and see sample size
+
+- __Cons__:
+  - Have to choose number of bins and bin locations (will revisit Wednesday)
+  - You can make a bad histogram
+  
+]
+.pull-right[
+```{r ref.label = 'histogram', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+# [Do NOT rely on box plots...](https://www.autodesk.com/research/publications/same-stats-different-graphs)
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://damassets.autodesk.net/content/dam/autodesk/research/publications-assets/gifs/same-stats-different-graphs/boxplots.gif")
+```
+
+Three clearly different distributions of data...
+
+#### But they all result in the exact same box plot!
+
+---
+
+### What do visualizations of continuous distributions display?
+
+__Probability that continuous variable $X$ takes a particular value is 0__ 
+
+e.g., $P$ (`flipper_length_mm` $= 200$) $= 0$, _why_?
+
+
+--
+Instead we use the __probability density function (PDF)__ to provide a __relative likelihood__ 
+
+- Density estimation is the focus of Wednesday's lecture 
+
+
+--
+For continuous variables we can use the __cumulative distribution function (CDF)__,
+
+$$
+F(x) = P(X \leq x)
+$$
+
+--
+For $n$ observations we can easily compute the __Empirical CDF (ECDF)__:
+
+
+$$\hat{F}_n(x)  = \frac{\text{# obs. with variable} \leq x}{n} = \frac{1}{n} \sum_{i=1}^{n}1(x_i \leq x)$$
+
+
+- where $1()$ is the indicator function, i.e. `ifelse(x_i <= x, 1, 0)`
+
+---
+
+## Display full distribution with ECDF plot
+
+.pull-left[
+
+- We make __ECDF plots__ with [`stat_ecdf()`](https://ggplot2.tidyverse.org/reference/stat_ecdf.html)
+
+```{r ecdf, eval = FALSE}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) + 
+  stat_ecdf() + #<<
+  theme_bw()
+```
+
+- __Pros__:
+  - Displays all of your data at once (except the order)
+  - Does NOT require any parameters to adjust
+  - As $n \rightarrow \infty$, our ECDF $\hat{F}_n(x)$ converges to the true CDF $F(x)$
+
+- __Cons__:
+  - _What do you think the cons are?_
+  
+]
+.pull-right[
+```{r ref.label = 'ecdf', echo = FALSE, fig.height=7}
+```
+]
+
+---
+
+## What's the relationship between these two figures?
+
+.pull-left[
+
+```{r ref.label = 'histogram', echo = FALSE, fig.height=7}
+```
+  
+]
+
+.pull-right[
+
+```{r ref.label = 'ecdf', echo = FALSE, fig.height=7}
+```
+]
+
+
+---
+
+## What about comparing to theoretical distributions?
+
+.pull-left[
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Normal_Distribution_PDF.svg/2560px-Normal_Distribution_PDF.svg.png")
+```
+
+
+]
+
+--
+
+.pull-right[
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Normal_Distribution_CDF.svg/2560px-Normal_Distribution_CDF.svg.png")
+```
+
+]
+
+---
+
+## One-Sample Kolmogorov-Smirnov Test
+
+- We compare the ECDF $\hat{F}(x)$ to a theoretical distribution's CDF $F(x)$
+
+--
+
+- The one sample KS test statistic is: $\text{max}_x |\hat{F}(x) - F(x)|$
+
+```{r, echo = FALSE, out.width="45%", fig.align='center'}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/c/cf/KS_Example.png")
+```
+
+
+---
+
+## Flipper length example
+
+What if we assume `flipper_length_mm` follows Normal distribution? i.e., `flipper_length_mm` $\sim N(\mu, \sigma^2)$
+
++ Need estimates for mean $\mu$ and standard deviation $\sigma$:
+
+```{r}
+flipper_length_mean <- mean(penguins$flipper_length_mm, na.rm = TRUE)
+flipper_length_sd <- sd(penguins$flipper_length_mm, na.rm = TRUE)
+```
+
+--
+
+Perform one-sample KS test using [`ks.test()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ks.test.html):
+
+```{r}
+ks.test(x = penguins$flipper_length_mm, y = "pnorm",
+        mean = flipper_length_mean, sd = flipper_length_sd)
+```
+
+
+---
+
+## Flipper length example
+
+```{r ks-test-viz, echo = FALSE, eval = FALSE}
+# First create the ECDF function for the variable:
+fl_ecdf <- ecdf(penguins$flipper_length_mm)
+# Compute the absolute value of the differences between the ECDF for the values
+# and the theoretical values with assumed Normal distribution:
+abs_ecdf_diffs <- abs(fl_ecdf(penguins$flipper_length_mm) - pnorm(penguins$flipper_length_mm,
+                                                                  mean = flipper_length_mean, sd = flipper_length_sd))
+# Now find where the maximum difference is:
+max_abs_ecdf_diff_i <- which.max(abs_ecdf_diffs)
+# Get this flipper length value:
+max_fl_diff_value <- penguins$flipper_length_mm[max_abs_ecdf_diff_i]
+# Plot the ECDF with the theoretical Normal and KS test info:
+penguins %>%
+  ggplot(aes(x = flipper_length_mm)) +
+  stat_ecdf(color = "darkblue") +
+  # Use stat_function to draw the Normal ECDF
+  stat_function(fun = pnorm, args = list(mean = flipper_length_mean, sd = flipper_length_sd), color = "black", linetype = "dashed") +
+  # Draw KS test line:
+  geom_vline(xintercept = max_fl_diff_value, color = "red") +
+  # Add text with the test results (x and y are manually entered locations)
+  annotate(geom = "text", x = 215, y = .25, label = "KS test stat = 0.12428\np-value = 5.163e-05") + 
+  labs(x = "Flipper length (mm)", y = "Fn(x)") + theme_bw()
+```
+
+
+```{r ref.label = 'ks-test-viz', echo = FALSE, fig.height=4}
+```
+
+---
+
+### Visualize distribution comparisons using quantile-quantile (q-q) plots
+
+.pull-left[
+
+- Compare observed values to theoretical predictions using assumed distribution
+
+- Theoretical values are based on observation's rank in sample and assumed distribution
+
+```{r qqplot, eval = FALSE}
+penguins %>%
+  ggplot(aes(sample = flipper_length_mm)) + #<<
+  stat_qq() + #<<
+  stat_qq_line() #<<
+```
+
+- Use [`stat_qq` and `stat_qq_line`](https://ggplot2.tidyverse.org/reference/geom_qq.html) to create q-q plots (default assumption is Normal distribution)
+
+- Line displays where observed $==$ theoretical
+
+]
+
+.pull-right[
+
+```{r ref.label = 'qqplot', echo = FALSE, fig.height=7}
+```
+
+]
+
+---
+class: center, middle
+
+# Next time: Density estimation
+
+Reminder: __HW2 due Wednesday!__ __Graphics critique/replication due Friday!__
+
+Recommended reading: 
+
+[CW Chapter 7 Visualizing distributions: Histograms and density plots](https://clauswilke.com/dataviz/histograms-density-plots.html)
+
+[CW Chapter 8 Visualizing distributions: Empirical cumulative distribution functions and q-q plots](https://clauswilke.com/dataviz/ecdf-qq.html)
+
+
+---
+
+## BONUS: Visualizing the KS test statistic
+
+```{r ref.label = 'ks-test-viz', echo = TRUE, eval = FALSE}
+```

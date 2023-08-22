@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## 2D Categorical Data
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 9/7/2022
+]
+
+---
+
+
+
+
+
+
+
+## 2D categorical basics: marginal / conditional distribution 
+
+
+```r
+library(palmerpenguins)
+addmargins(table("Species" = penguins$species, "Island" = penguins$island))
+```
+
+```
+##            Island
+## Species     Biscoe Dream Torgersen Sum
+##   Adelie        44    56        52 152
+##   Chinstrap      0    68         0  68
+##   Gentoo       124     0         0 124
+##   Sum          168   124        52 344
+```
+
+- Column and row sums: marginal distributions (blue)
+
+- Values within rows: conditional distribution for `Island` given `Species` (orange)
+
+- Values within columns: conditional distribution for `Species` given `Island` (purple)
+
+- Bottom right: total number of observations (red)
+
+---
+
+## Connecting distributions to visualizations
+
+There are five distributions we may care about for two categorical variables `\(A\)` and `\(B\)`:
+
+- __Marginals__:  `\(P(A)\)` and `\(P(B)\)`
+
+- __Conditionals__: `\(P(A | B)\)` and `\(P(B|A)\)`
+
+- __Joint__: `\(P(A, B)\)`
+
+--
+
+We use bar charts to visualize marginal distributions for categorical variables
+
+__How can we visualize the conditionals and joint distributions?__
+
+--
+
+Naive approaches to visualize:
+
+- Different conditionals, e.g., `\(P(A|B = b_1)\)`, `\(P(A | B = b_2)\)`, ..., could make a bar chart for each `\(b_1, b_2,...\)`
+
+- Joint distribution, could create a bar for each combination of `\(A\)` and `\(B\)`
+
+We'll effectively make tweaks of these with __stacked__ and __side-by-side__ bar charts
+
+---
+
+## Stacked bar plots - a bar chart of spine charts
+
+.pull-left[
+
+
+
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = species,
+*            fill = island)) +
+  geom_bar() + 
+  theme_bw()
+```
+
+- Easy to see marginal of `species`
+
+  - i.e., `\(P(\)` `x` `\()\)`
+
+- Can see conditional of `island` | `species` 
+
+  - i.e., `\(P(\)` `fill` | `x` `\()\)`
+
+- Harder to see conditional of `species` | `island`
+
+  - i.e., `\(P(\)` `x` | `fill` `\()\)`
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec3/unnamed-chunk-3-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Side-by-side bar plots
+
+.pull-left[
+
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = species,
+             fill = island)) + 
+* geom_bar(position = "dodge") +
+  theme_bw()
+```
+
+- Use `position = "dodge"` to move bars side-by-side (this applies to other visualizations also)
+
+- Notice that some bars are dropped...
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec3/unnamed-chunk-4-1.png" width="100%" /&gt;
+
+]
+
+
+---
+
+## Side-by-side bar plots
+
+.pull-left[
+
+
+
+```r
+penguins %&gt;%
+  ggplot(aes(x = species,
+             fill = island)) + 
+  geom_bar(position = 
+*            position_dodge(preserve = "single")) +
+  theme_bw()
+```
+
+- Easy to see conditional of `island` | `species`
+
+  - i.e., `\(P(\)` `fill` | `x` `\()\)`
+
+- Can see conditional of `species` | `island` 
+
+  - i.e., `\(P(\)` `x` | `fill` `\()\)`
+
+- Hard to see marginals...
+  
+__What else do we see?__
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec3/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## What do you prefer?
+
+.pull-left[
+
+&lt;img src="figs/Lec3/unnamed-chunk-6-1.png" width="100%" /&gt;
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec3/unnamed-chunk-7-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## Inference for categorical data with the chi-square test
+
+For 1D categorical data:
+
+- __Null hypothesis__ `\(H_0\)`: `\(p_1 = p_2 = \dots = p_K\)`, compute the test statistic:
+
+$$
+\chi^2 = \sum_{j=1}^K \frac{(O_j - E_j)^2}{E_j}
+$$
+
+- `\(O_j\)`: observed counts in category `\(j\)`
+
+- `\(E_j\)`: expected counts under `\(H_0\)`, i.e., each category is equally to occur `\(n / K = p_1 = p_2 = \dots = p_K\)`
+
+--
+
+
+```r
+*chisq.test(table(penguins$species))
+```
+
+```
+## 
+## 	Chi-squared test for given probabilities
+## 
+## data:  table(penguins$species)
+## X-squared = 31.907, df = 2, p-value = 1.179e-07
+```
+
+---
+
+## Hypothesis testing review
+
+.pull-left[
+Computing `\(p\)`-values works like this:
+
+- Choose a test statistic.
+
+- Compute the test statistic in your dataset.
+
+- Is test statistic "unusual" compared to what I would expect under `\(H_0\)`?
+
+- Compare `\(p\)`-value to __target error rate__ `\(\alpha\)` (typically referred to as target level `\(\alpha\)` )
+
+- Typically choose `\(\alpha = 0.05\)` 
+
+  - i.e., if we reject null  hypothesis at `\(\alpha = 0.05\)` then, assuming `\(H_0\)` is true, there is a 5% chance it is a false positive (aka Type 1 error)
+]
+
+--
+
+
+.pull-right[
+
+&lt;img src="https://measuringu.com/wp-content/uploads/2021/04/042121-F2.jpg" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Inference for 2D categorical data 
+
+Again we use the __chi-square test__:
+
+- __Null hypothesis__ `\(H_0\)`: variables `\(A\)` and `\(B\)` are independent, compute the test statistic:
+
+
+`$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$`
+
+
+- `\(O_{ij}\)`: observed counts in contingency table
+
+- `\(E_{ij}\)`: expected counts under `\(H_0\)`
+
+$$
+`\begin{aligned}
+E_{ij} &amp;= n \cdot P(A = a_i, B = b_j) \\
+&amp;= n \cdot P(A = a_i) P(B = b_j) \\
+&amp;= n \cdot \left( \frac{n_{i \cdot}}{n} \right) \left( \frac{ n_{\cdot j}}{n} \right)
+\end{aligned}`
+$$
+
+---
+
+## Inference for 2D categorical data 
+
+Again we use the __chi-square test__:
+
+- __Null hypothesis__ `\(H_0\)`: variables `\(A\)` and `\(B\)` are independent, compute the test statistic:
+
+`$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$`
+
+- `\(O_{ij}\)`: observed counts in contingency table
+
+- `\(E_{ij}\)`: expected counts under `\(H_0\)`
+
+
+```r
+*chisq.test(table(penguins$species, penguins$island))
+```
+
+```
+## 
+## 	Pearson's Chi-squared test
+## 
+## data:  table(penguins$species, penguins$island)
+## X-squared = 299.55, df = 4, p-value &lt; 2.2e-16
+```
+
+
+---
+
+## Visualize independence test with mosaic plots
+
+Two variables are __independent__ if knowing the level of one tells us nothing about the other
+
+- i.e.  `\(P(A | B) = P(A)\)`, and that `\(P(A, B) = P(A) \times P(B)\)`
+
+--
+
+.pull-left[
+
+Create a __mosaic__ plot using __base `R`__
+
+
+```r
+*mosaicplot(table(penguins$species,
+*                penguins$island))
+```
+
+- spine chart _of spine charts_
+
+- width `\(\propto\)` marginal of `species` (columns)
+
+- height `\(\propto\)` conditional of `island` | `species` (rows | columns)
+
+- area `\(\propto\)` joint distribution
+
+__[`ggmosaic`](https://github.com/haleyjeppson/ggmosaic) has issues...__
+]
+.pull-right[
+&lt;img src="figs/Lec3/unnamed-chunk-11-1.png" width="100%" /&gt;
+]
+
+---
+
+## Shade by _Pearson residuals_
+
+- The __test statistic__ is: 
+
+`$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$`
+
+- Define the _Pearson residuals_ as:
+
+`$$r_{ij} = \frac{O_{ij} - E_{ij}}{\sqrt{E_{ij}}}$$`
+
+- Sidenote: In general, Pearson residuals are `\(\frac{\text{residuals}}{\sqrt{\text{variance}}}\)`
+
+--
+
+- `\(r_{ij} \approx 0 \rightarrow\)` observed counts are close to expected counts
+
+- `\(|r_{ij}| &gt; 2 \rightarrow\)` "significant" at level `\(\alpha = 0.05\)`.
+
+--
+
+- Very positive `\(r_{ij} \rightarrow\)` more than expected, while very negative `\(r_{ij} \rightarrow\)` fewer than expected
+
+- Mosaic plots: Color by Pearson residuals to tell us which combos are much bigger/smaller than expected.
+
+---
+
+## Shade by _Pearson residuals_
+
+
+```r
+*mosaicplot(table(penguins$species, penguins$island), shade = TRUE)
+```
+
+&lt;img src="figs/Lec3/mosaic-shade-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+__These variables are clearly NOT independent!__
+
+---
+
+## What about two variables that are independent?
+
+
+```r
+mosaicplot(table(penguins$island, penguins$sex), shade = TRUE,
+           # Change the plot title
+*          main = "Distribution of penguins' sex does not vary across islands")
+```
+
+&lt;img src="figs/Lec3/mosaic-shade-sex-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## BONUS: Treemaps are an alternative to mosaic plots
+
+.pull-left[
+
+
+```r
+library(treemapify)
+penguins %&gt;%
+  group_by(species, island) %&gt;%
+  summarize(count = n(), .groups = "drop") %&gt;%
+  ggplot(aes(area = count, subgroup = island,
+             label = species,
+             fill = interaction(species, island))) +
+  # 1. Draw species borders and fill colors
+  geom_treemap() +
+  # 2. Draw island borders
+  geom_treemap_subgroup_border() +
+  # 3. Print island text
+  geom_treemap_subgroup_text(place = "centre", grow = T, 
+                             alpha = 0.5, colour = "black",
+                             fontface = "italic", min.size = 0) +
+  # 4. Print species text
+  geom_treemap_text(colour = "white", place = "topleft", 
+                    reflow = T) +
+  guides(colour = "none", fill = "none")
+```
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec3/unnamed-chunk-12-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+- Use the [`treemapify` package](https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html)
+
+- Do NOT require the same categorical levels across subgroups
+
+
+]
+
+
+
+---
+class: center, middle
+
+# Next time: 2D categorical data
+
+Reminder: __HW1 due tonight!__ HW2 posted and due next week...
+
+Recommended reading: 
+
+[CW Chapter 11 Visualizing nested proportions](https://clauswilke.com/dataviz/nested-proportions.html)
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

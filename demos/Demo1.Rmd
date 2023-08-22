@@ -1,0 +1,222 @@
+---
+title: "Into the tidyverse"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+
+## What is Exploratory Data Analysis (EDA)?
+
+_(Broadly speaking)_ EDA = questions about data + wrangling + visualization 
+
+[`R` for Data Science](https://r4ds.had.co.nz/): _"EDA is a state of mind"_, an iterative cycle:
+
+- generate questions
+
+- answer via transformations and visualizations
+
+Example of questions?
+
+- What type of __variation__ do the variables display?
+
+- What type of __relationships__ exist between variables?
+
+__Goal__: develop understanding and become familiar with your data
+
+- EDA is __NOT__ a replacement for statistical inference and learning
+
+- EDA is an __important__ and __necessary__ step to build intuition
+
+We tackle the challenges of EDA with a data science workflow. An example of this according to [Hadley Wickham](http://hadley.nz/) in [`R` for Data Science](https://r4ds.had.co.nz/):
+
+.center[![](https://d33wubrfki0l68.cloudfront.net/571b056757d68e6df81a3e3853f54d3c76ad6efc/32d37/diagrams/data-science.png)]
+
+Aspects of data __wrangling__:
+
+- __import__: reading in data (e.g., `read_csv()`)
+
+- __tidy__: rows = observations, columns = variables (i.e. __tabular__ data)
+
+- __transform__: filter observations, create new variables, summarize, etc. 
+
+
+## Working with [`penguins`](https://allisonhorst.github.io/palmerpenguins/articles/intro.html)
+
+In `R`, there are many libraries or packages/groups of programs that are not permanently stored in `R`, so we have to load them when we want to use them. You can load an `R` package by typing `library(package_name)`. (Sometimes we need to download/install the package first, as described in Demo0.)
+
+Throughout this demo we will use the [`palmerpenguins` dataset](https://allisonhorst.github.io/palmerpenguins/articles/intro.html). To access the data, you will need to install the `palmerpenguins` package:
+
+```{r, eval = FALSE}
+install.packages("palmerpenguins")
+```
+
+__Import__ the `penguins` dataset by loading the `palmerpenguins` package using the `library` function and then access the data with the `data()` function:
+
+```{r load-penguins, warning = FALSE, message = FALSE}
+library(palmerpenguins) 
+data(penguins)
+```
+
+View some basic info about the `penguins` dataset:
+```{r penguins-info}
+dim(penguins) # displays same info as c(nrow(penguins), ncol(penguins))
+class(penguins)
+```
+
+`tbl` (pronounced `tibble`) is the `tidyverse` way of storing tabular data, like a spreadsheet or `data.frame`
+
+I assure you that you'll run into errors as you code in `R`; in fact, my attitude as a coder is that something is wrong if I *never* get any errors while working on a project. When you run into an error, your first reaction may be to panic and post a question to Piazza. However, checking help documentation in `R` can be a great way to figure out what's going wrong. (For good or bad, I end up having to read help documentation almost every day of my life - because, well, I regularly make mistakes in `R`.)
+
+Look at the help documentation for `penguins` by typing `help(penguins)` in the Console. What are the names of the variables in this dataset? How many observations are in this dataset?
+
+```{r, eval = FALSE}
+help(penguins)
+```
+
+__You should always look at your data before doing anything__: view the first 6 (by default) rows with `head()`
+
+```{r penguins-head}
+head(penguins) # Try just typing penguins into your console, what happens?
+```
+
+Is our `penguins` dataset __tidy__?
+
+- Each row = a single penguin
+
+- Each column = different measurement about the penguins (can print out column names directly with `colnames(penguins)` or `names(penguins)`)
+
+__We'll now explore differences among the penguins using the `tidyverse`__.
+
+## Let the data wrangling begin...
+
+First, load the `tidyverse` for exploring the data - and do NOT worry about the warning messages that will pop-up! Warning messages will tell you when other packages that are loaded may have functions replaced with the most recent package you've loaded. In general though, you should just be concerned when an error message pops up (errors are different than warnings!).
+
+```{r}
+library(tidyverse)
+```
+
+We'll start by __summarizing__ _continuous_ (e.g., `bill_length_mm`, `flipper_length_mm`) and _categorical_ (e.g., `species`, `island`) variables in different ways.
+
+We can compute __summary statistics__ for _continuous_ variables with the `summary()` function:
+
+```{r penguins-bill-summary}
+summary(penguins$bill_length_mm)
+```
+
+Compute __counts__ of _categorical_ variables with `table()` function:
+
+```{r penguins-island-summary}
+table("island" = penguins$island) # be careful it ignores NA values!
+```
+
+How do we remove the penguins with missing `bill_length_mm` values? Within the `tidyverse`, [`dplyr`](https://dplyr.tidyverse.org/) is a package with functions for data wrangling (because it's within the tidyverse that means you do NOT have to load it separately with `library(dplyr)` after using `library(tidyverse)`!). It's considered a _"grammar of data manipulation"_: `dplyr` functions are __verbs__, datasets are __nouns__.
+
+__We can [`filter()`](https://dplyr.tidyverse.org/reference/filter.html) our dataset to choose observations meeting conditions__:
+
+```{r filter-penguins}
+clean_penguins <- filter(penguins, !is.na(bill_length_mm))
+# Use help(is.na) to see what it returns. And then observe 
+# that the ! operator means to negate what comes after it.
+# This means !TRUE == FALSE (i.e., opposite of TRUE is equal to FALSE).
+nrow(penguins) - nrow(clean_penguins) # Difference in rows
+```
+
+If we want to only consider a subset of columns in our data, __we can [`select()`](https://dplyr.tidyverse.org/reference/select.html) variables of interest__:
+
+```{r select-penguins}
+sel_penguins <- select(clean_penguins, species, island, bill_length_mm, flipper_length_mm)
+head(sel_penguins, n = 3)
+```
+
+__We can [`arrange()`](https://dplyr.tidyverse.org/reference/arrange.html) our dataset to sort observations by variables__:
+```{r arrange-penguins}
+bill_penguins <- arrange(sel_penguins, desc(bill_length_mm)) # use desc() for descending order
+head(bill_penguins, n = 3)
+```
+
+__We can [`summarize()`](https://dplyr.tidyverse.org/reference/summarise.html) our dataset to one row based on functions of variables__
+```{r summarize-penguins}
+summarize(bill_penguins, max(bill_length_mm), median(flipper_length_mm))
+```
+__We can [`mutate()`](https://dplyr.tidyverse.org/reference/mutate.html) our dataset to create new variables__ (mutate is a weird name...)
+```{r mutate-penguins}
+new_penguins <- mutate(bill_penguins, 
+                       bill_flipper_ratio = bill_length_mm / flipper_length_mm,
+                       flipper_bill_ratio = flipper_length_mm / bill_length_mm)
+head(new_penguins, n = 1)
+```
+
+
+How do we perform several of these actions?
+
+```{r nested-penguins}
+head(arrange(select(mutate(filter(penguins, !is.na(flipper_length_mm)), bill_flipper_ratio = bill_length_mm / flipper_length_mm), species, island, bill_flipper_ratio), desc(bill_flipper_ratio)), n = 1)
+```
+
+That's awfully annoying to do, and also difficult to read...
+
+## Enter the pipeline
+
+The `%>%` (_pipe_) operator is used in the `tidyverse` (from [`magrittr`](https://magrittr.tidyverse.org/articles/magrittr.html)) to chain commands together 
+
+`%>%` directs the __data analyis pipeline__: output of one function pipes into input of the next function
+
+```{r penguins-pipeline, tidy = FALSE}
+penguins %>%
+  filter(!is.na(flipper_length_mm)) %>%
+  mutate(bill_flipper_ratio = bill_length_mm / flipper_length_mm) %>%
+  select(species, island, bill_flipper_ratio) %>%
+  arrange(desc(bill_flipper_ratio)) %>%
+  head(n = 5)
+```
+
+## More pipeline actions!
+
+Instead of `head()`, __we can [`slice()`](https://dplyr.tidyverse.org/reference/slice.html) our dataset to choose the observations based on the position__
+
+```{r slice-penguins, tidy = FALSE}
+penguins %>%
+  filter(!is.na(flipper_length_mm)) %>%
+  mutate(bill_flipper_ratio = bill_length_mm / flipper_length_mm) %>%
+  select(species, island, bill_flipper_ratio) %>%
+  arrange(desc(bill_flipper_ratio)) %>%
+  slice(c(1, 2, 10, 100))
+```
+
+## Grouped operations
+
+__We [`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html) to split our dataset into groups based on a variable's values__
+
+```{r penguins-island-groups, tidy = FALSE}
+penguins %>%
+  filter(!is.na(flipper_length_mm)) %>%
+  group_by(island) %>%
+  summarize(n_penguins = n(), #counts number of rows in group
+            ave_flipper_length = mean(flipper_length_mm), 
+            sum_bill_depth = sum(bill_depth_mm),
+            .groups = "drop") %>% # all levels of grouping dropping
+  arrange(desc(n_penguins)) %>%
+  slice(1:5)
+```
+
+- `group_by()` is only useful in a pipeline (e.g. with `summarize()`), and pay attention to its behavior 
+
+- specify the `.groups` field to decide if observations remain grouped or not after summarizing (you can also use `ungroup()` for this as well)
+
+## Putting it all together...
+
+As your own exercise, reate a __tidy__ dataset where each row = an island with the following variables:
+
+- number of penguins,
+- number of unique species on the island (see `help(unique)`),
+- average `body_mass_g`, 
+- variance (see `help(var)`) of `bill_depth_mm`
+
+Prior to making those variables, make sure to filter missings and also only consider female penguins. Then arrange the islands in order of the average `body_mass_g`:
+
+```{r tidy-up-penguins}
+# INSERT YOUR CODE HERE
+```
+
+
+

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <meta name="date" content="2022-10-10" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## Trends and Animations
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 10/10/2022
+]
+
+---
+
+
+
+
+
+
+
+# Please fill out the FCE!
+
+#### Faculty course evaluations (FCEs) are out now
+
+#### I take feedback very seriously and I want the course to be useful!
+
+#### If you enjoyed this class, please fill out the FCE.
+
+#### If you didn’t enjoy this class, please fill out the FCE.
+
+
+---
+
+## Longitudinal data and time series structure
+
+- For now, consider a _single observation_ measured across time
+
+- Time series data usually has the following structure:
+
+| Variable   | `\(T_1\)`   | `\(T_2\)`   | `\(\dots\)`  | `\(T_J\)` |
+| ---------- | -------- | -------- | -------- | -------- |
+| `\(X_1\)` | `\(x_{11}\)` | `\(x_{12}\)` | `\(\dots\)`  | `\(x_{1J}\)` |
+| `\(X_2\)` | `\(x_{21}\)` | `\(x_{22}\)` | `\(\dots\)`  | `\(x_{2J}\)` |
+| `\(\vdots\)`    | `\(\vdots\)`  | `\(\vdots\)`  | `\(\dots\)`  | `\(\vdots\)`  |
+| `\(X_P\)` | `\(x_{P1}\)` | `\(x_{P2}\)` | `\(\dots\)`  | `\(x_{PJ}\)` |
+
+--
+
+- With `\(N\)` observations we have `\(N\)` of these matrices
+
+--
+
+- Time may consist of regularly spaced intervals
+
+  - For example, `\(T_1 = t\)`, `\(T_2 = t + h\)`, `\(T_3 = t + 2h\)`, etc.
+  
+- It could also consist of irregularly spaced intervals. Then have to work with the raw `\(T_1,T_2,...\)`
+
+
+---
+
+## Demo example: Statistics PhDs by year
+
+
+
+.pull-left[
+
+
+```r
+stat_phd_year_summary %&gt;%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_point() +
+  scale_x_continuous(
+*   breaks = unique(stat_phd_year_summary$year),
+*   labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+- Typical scatterplot display with `n_phds` on the y-axis and `year` on the x-axis:
+
+- Manually set x-axis breaks to show every year 
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-2-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+]
+
+---
+
+## Add lines to emphasize order
+
+.pull-left[
+
+```r
+stat_phd_year_summary %&gt;%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_point() +
+* geom_line() +
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year),
+    labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-3-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+]
+
+---
+
+## Drop points to emphasize trends
+
+&lt;img src="figs/Lec12/only-line-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Can fill the area under the line
+
+.pull-left[
+
+```r
+stat_phd_year_summary %&gt;%
+  ggplot(aes(x = year, y = n_phds)) +
+* geom_area(fill = "darkblue", alpha = 0.5) +
+  geom_line() +
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year),
+    labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+- __Only appropriate when the y-axis starts at 0!__
+
+  - It changes the y-axis by default to start at 0
+
+- Also a redundant use of ink...
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-4-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Plotting several time series - do NOT only use points
+
+
+.pull-left[
+
+```r
+stats_phds %&gt;%
+  ggplot(aes(x = year, y = n_phds, 
+*            color = field)) +
+  geom_point() +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 7)) +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+- __We should NOT display multiple time series with just points!__
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-5-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Plotting several time series - use lines!
+
+
+.pull-left[
+
+```r
+stats_phds %&gt;%
+  ggplot(aes(x = year, y = n_phds, 
+*            color = field)) +
+* geom_line() +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 7)) +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+- Lines alleviate issue of times series running into each other which is difficult to read with points
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-6-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Use [`ggrepel`](https://ggrepel.slowkow.com/articles/examples.html) to directly label lines
+
+&lt;img src="figs/Lec12/unnamed-chunk-7-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## How do we plot many lines? NOT LIKE THIS!
+
+&lt;img src="figs/Lec12/unnamed-chunk-8-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Instead we highlight specific lines
+
+&lt;img src="figs/Lec12/unnamed-chunk-9-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## What about Nightingale's rose diagram?
+
+&lt;img src="https://daily.jstor.org/wp-content/uploads/2020/08/florence_nightingagle_data_visualization_visionary_1050x700.jpg" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## What about Nightingale's rose diagram?
+
+&lt;img src="figs/Lec12/unnamed-chunk-11-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## What about displaying lines instead?
+
+&lt;img src="figs/Lec12/unnamed-chunk-12-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Storytelling with animation...
+
+
+
+.pull-left[
+
+
+```r
+f1_data_ex %&gt;%
+  ggplot(aes(x = round, y = points, 
+             group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw()
+```
+
+- Can see the accumulated points increasing over time for each team
+
+- But we could _incrementally_ reveal the results at each stage __to emphasize the story of progression__
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec12/unnamed-chunk-14-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Use [`gganimate`](https://gganimate.com/) to add animations
+
+.pull-left[
+
+
+```r
+library(gganimate)
+f1_data_ex %&gt;%
+  ggplot(aes(x = round, y = points, 
+             group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw() +
+  # Reveal the results by round
+* transition_reveal(round)
+```
+
+- Emphasize the intermediate results through animation with the `transition_reveal()` function
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec12/unnamed-chunk-15-1.gif" width="100%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Using animation to add a dimension
+
+.pull-left[
+
+
+```r
+txhousing %&gt;% 
+  group_by(city, year) %&gt;% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %&gt;% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  scale_color_manual(values = c("black", "darkred")) +
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, 
+                     name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", 
+       y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red")
+```
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-16-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+]
+
+---
+
+## Using animation to add a dimension
+
+.pull-left[
+
+
+```r
+txhousing %&gt;% 
+  group_by(city, year) %&gt;% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %&gt;% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  scale_color_manual(values = c("black", "darkred")) +
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, 
+                     name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red", 
+*      title = "Year: {frame_time}") +
+* transition_time(year)
+```
+
+
+]
+.pull-right[
+
+&lt;img src="figs/Lec12/unnamed-chunk-17-1.gif" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+]
+
+
+---
+
+# Reminders about animation
+
+Some key points to think about before adding animation to a visualization:
+
+1. Always make and describe the original / base graphic first that does NOT include animation.
+
+2. Before adding animation to the graph, ask yourself: How would animation give you additional insights about the data **that you would otherwise not be able to**?
+
+3. Never add animation just because it's cool! 
+
+4. When presenting, make sure you explain exactly what is being displayed with animation and what within the animation you want to emphasize. This will help you determine if animation is actually worth including.
+
+
+---
+class: center, middle
+
+# Next time: [`htmlwidgets`](http://www.htmlwidgets.org/index.html) and dashboards
+
+__Report due Friday Oct 14th by 5 PM EDT via email!__ 
+
+Recommended reading: 
+
+[CW CH 13 Visualizing time series and other functions of an independent variable](https://clauswilke.com/dataviz/time-series.html)
+
+[CW CH 14 Visualizing trends](https://clauswilke.com/dataviz/visualizing-trends.html)
+
+[`gganimate` package](https://gganimate.com/)
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

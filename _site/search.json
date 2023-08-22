@@ -1,0 +1,21 @@
+{
+  "articles": [
+    {
+      "path": "about.html",
+      "title": "About this site",
+      "description": "Some additional details about the website",
+      "author": [],
+      "contents": "\n\n\n\n",
+      "last_modified": "2022-10-11T22:59:55-04:00"
+    },
+    {
+      "path": "index.html",
+      "title": "Data Visualization",
+      "description": "Companion website for the MSP Data Visualization course offered in Fall 2022 Mini 1 and taught by Professor Ron Yurko.\n",
+      "author": [],
+      "contents": "\n\nContents\nLectures\nR Demos\nResources\nRecommended textbooks\nMore ggplot2\nresources\nR Markdown\n\nAcknowledgments\n\nLectures\nLecture slides are available below in html format, and the .Rmd files\nare linked from GitHub.\nLecture\nTopic\nhtml\nRmd\n1\nIntroduction and the Grammar of Graphics\n\n\n2\n1D Categorical Data\n\n\n3\n2D Categorical Data\n\n\n4\n1D Quantitative Data\n\n\n5\nDensity Estimation\n\n\n6\n2D Quantitative Data\n\n\n7\n2D Quant and Intro to High Dimensional Data\n\n\n8\nHigh Dimensional Data\n\n\n9\nt-SNE and Shiny\n\n\n10\nVisualizing Spatial Data and Maps\n\n\n11\nVisualizing Text Data\n\n\n12\nTrends and Animations\n\n\n13\nExtras with htmlwidgets and Dashboards\n\n\nR Demos\nAdditional R demos are available below in html\nformat.\nDemo\nTopic\nhtml\nRmd\n0\nInstalling R and RStudio\n\n\n1\nInto the tidyverse\n\n\n2\nScatterplots and regression\n\n\n3\nPairs plots, correlograms, and parallel coordinates\n\n\n4\nMulti-Dimensional Scaling\n\n\n5\nPrincipal Component Analysis\n\n\n6\nIntroduction to t-SNE and UMAP\n\n\n7\nVisualizing Spatial Point Data\n\n\n8\nVisualizing Areal Data\n\n\n9\nVisualizing Text Data\n\n\n10\nVisualizing Trends\n\n\n11\nAnimations\n\n\n12\nModifying Colors and Themes\n\n\n13\nExample Dashboard\n\n\nResources\nRecommended textbooks\nR for Data Science: https://r4ds.had.co.nz/\nFundamentals of Data Visualization: https://clauswilke.com/dataviz/index.html\nData Visualization: A Practical Introduction: https://socviz.co/index.html#preface\nggplot2: Elegant Graphics for Data Analysis: https://ggplot2-book.org/\nMastering Shiny: https://mastering-shiny.org/index.html\nThe best resource for working with git and GitHub in\nR / RStudio: https://happygitwithr.com/\nMore ggplot2 resources\nThe ggplot2 cheatsheet: https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-visualization-2.1.pdf\nCreating custom themes: https://themockup.blog/posts/2020-12-26-creating-and-using-custom-ggplot2-themes/\nR Graphics cookbook: https://r-graphics.org/\nA guide to various scales: https://ggplot2tor.com/scales\nR Markdown\nThe definitive guide to R Markdown: https://bookdown.org/yihui/rmarkdown/\nR Markdown reference guide: https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf\nR Markdown cheat sheet: https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf\nAcknowledgments\nThis course website is made with the distill package. Thanks to\nMeghan Hall, Alison\nHill, and Shamindra\nShrotriya for their incredible examples and tutorials that helped in\nthe process of making this site.\n\n\n\n",
+      "last_modified": "2022-10-11T22:59:56-04:00"
+    }
+  ],
+  "collections": []
+}

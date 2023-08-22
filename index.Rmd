@@ -1,0 +1,90 @@
+---
+title: "Data Visualization"
+description: |
+  Companion website for the MSP Data Visualization course offered in Fall 2023 Mini 1 and taught by Professor Ron Yurko.
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Learn more about creating websites with Distill at:
+# https://rstudio.github.io/distill/website.html
+
+# Learn more about publishing to GitHub Pages at:
+# https://rstudio.github.io/distill/publish_website.html#github-pages
+
+```
+
+
+## Lectures
+
+Lecture slides are available below in html format, and the .Rmd files are linked from GitHub.
+
+| Lecture | Topic                         | html                                                                               | Rmd                                                                                                              |
+|-----------|-----------------------------------------|-----------|-----------|
+| 1       | Introduction and the Grammar of Graphics | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec1#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec1.Rmd) |
+
+
+## R Demos
+
+Additional `R` demos are available below in html format.
+
+| Demo | Topic                         | html                                                                               | Rmd                                                                                                              |
+|-----------|-----------------------------------------|-----------|-----------|
+| 0       | Installing R and RStudio | [`r icons::fontawesome$solid$laptop`](https://cmu-36613.netlify.app/demos/Demo0.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall22/blob/main/demos/Demo0.Rmd) |
+| 1       | Into the tidyverse | [`r icons::fontawesome$solid$laptop`](https://cmu-36613.netlify.app/demos/Demo1.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall22/blob/main/demos/Demo1.Rmd) |
+
+
+## Resources
+
+### Recommended textbooks
+
+-   R for Data Science: <https://r4ds.hadley.nz/>
+
+-   Fundamentals of Data Visualization: <https://clauswilke.com/dataviz/index.html>
+
+-   Data Visualization: A Practical Introduction: <https://socviz.co/index.html#preface>
+
+-   ggplot2: Elegant Graphics for Data Analysis: <https://ggplot2-book.org/>
+
+-   Mastering Shiny: <https://mastering-shiny.org/index.html>
+
+-   The best resource for working with `git` and GitHub in `R` / RStudio: <https://happygitwithr.com/>
+
+### More `ggplot2` resources
+
+-   The `ggplot2` cheatsheet: <https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-visualization-2.1.pdf>
+
+-   Creating custom themes: <https://themockup.blog/posts/2020-12-26-creating-and-using-custom-ggplot2-themes/>
+
+-   R Graphics cookbook: <https://r-graphics.org/>
+
+-   A guide to various scales: <https://ggplot2tor.com/scales>
+
+### R Markdown
+
+-   The definitive guide to R Markdown: <https://bookdown.org/yihui/rmarkdown/>
+
+-   R Markdown reference guide: <https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf>
+
+-   R Markdown cheat sheet: <https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf>
+
+## Acknowledgments {.appendix}
+
+This course website is made with the [distill package](https://rstudio.github.io/distill/). Thanks to [Meghan Hall](https://meghan.rbind.io/), [Alison Hill](https://rstudio-education.github.io/teaching-in-production/), and [Shamindra Shrotriya](https://www.shamindras.com/posts/2019-07-11-shrotriya2019distillpt1/) for their incredible examples and tutorials that helped in the process of making this site.
+
+```{r, include=FALSE, results='asis'}
+library(metathis)
+meta() %>%
+  meta_social(
+    title = "CMU 36-613",
+    description = "Course website for Data Visualization, by Ron Yurko",
+    url = "https://cmu-36613.netlify.app/",
+    image_alt = "CMU 36-613",
+    og_type = "website",
+    og_author = "Ron Yurko",
+    twitter_card_type = "summary",
+    twitter_creator = "@Stat_Ron"
+  )
+```

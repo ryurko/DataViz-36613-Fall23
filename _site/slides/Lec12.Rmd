@@ -1,0 +1,604 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "Trends and Animations"  
+author: 
+  - "Professor Ron Yurko"
+date: '10/10/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec12/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+# Please fill out the FCE!
+
+#### Faculty course evaluations (FCEs) are out now
+
+#### I take feedback very seriously and I want the course to be useful!
+
+#### If you enjoyed this class, please fill out the FCE.
+
+#### If you didn’t enjoy this class, please fill out the FCE.
+
+
+---
+
+## Longitudinal data and time series structure
+
+- For now, consider a _single observation_ measured across time
+
+- Time series data usually has the following structure:
+
+| Variable   | $T_1$   | $T_2$   | $\dots$  | $T_J$ |
+| ---------- | -------- | -------- | -------- | -------- |
+| $X_1$ | $x_{11}$ | $x_{12}$ | $\dots$  | $x_{1J}$ |
+| $X_2$ | $x_{21}$ | $x_{22}$ | $\dots$  | $x_{2J}$ |
+| $\vdots$    | $\vdots$  | $\vdots$  | $\dots$  | $\vdots$  |
+| $X_P$ | $x_{P1}$ | $x_{P2}$ | $\dots$  | $x_{PJ}$ |
+
+--
+
+- With $N$ observations we have $N$ of these matrices
+
+--
+
+- Time may consist of regularly spaced intervals
+
+  - For example, $T_1 = t$, $T_2 = t + h$, $T_3 = t + 2h$, etc.
+  
+- It could also consist of irregularly spaced intervals. Then have to work with the raw $T_1,T_2,...$
+
+
+---
+
+## Demo example: Statistics PhDs by year
+
+```{r, echo=FALSE}
+# Read in the tidytuesday data
+library(tidyverse)
+phd_field <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-02-19/phd_by_field.csv")
+stats_phds <- phd_field %>%
+  filter(str_detect(tolower(field), "statistics"))
+stat_phd_year_summary <- stats_phds %>%
+  group_by(year) %>%
+  summarize(n_phds = sum(n_phds))
+```
+
+.pull-left[
+
+```{r init-points, eval = FALSE}
+stat_phd_year_summary %>%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_point() +
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year), #<<
+    labels = unique(stat_phd_year_summary$year)) + #<<
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+- Typical scatterplot display with `n_phds` on the y-axis and `year` on the x-axis:
+
+- Manually set x-axis breaks to show every year 
+
+]
+.pull-right[
+
+```{r ref.label="init-points", fig.height=7, fig.align='center', echo = FALSE}
+```
+
+
+]
+
+---
+
+## Add lines to emphasize order
+
+.pull-left[
+```{r init-line, eval = FALSE}
+stat_phd_year_summary %>%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_point() +
+  geom_line() + #<<
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year),
+    labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+
+]
+.pull-right[
+
+```{r ref.label="init-line", fig.height=7, fig.align='center', echo = FALSE}
+```
+
+
+]
+
+---
+
+## Drop points to emphasize trends
+
+```{r only-line, echo = FALSE, fig.align='center'}
+stat_phd_year_summary %>%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_line() + #<<
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year),
+    labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+
+---
+
+## Can fill the area under the line
+
+.pull-left[
+```{r area-line, eval = FALSE}
+stat_phd_year_summary %>%
+  ggplot(aes(x = year, y = n_phds)) +
+  geom_area(fill = "darkblue", alpha = 0.5) + #<<
+  geom_line() +
+  scale_x_continuous(
+    breaks = unique(stat_phd_year_summary$year),
+    labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time")
+```
+
+- __Only appropriate when the y-axis starts at 0!__
+
+  - It changes the y-axis by default to start at 0
+
+- Also a redundant use of ink...
+
+
+]
+.pull-right[
+
+```{r ref.label="area-line", fig.height=7, fig.align='center', echo = FALSE}
+```
+
+]
+
+---
+
+## Plotting several time series - do NOT only use points
+
+
+.pull-left[
+```{r color-points, eval = FALSE}
+stats_phds %>%
+  ggplot(aes(x = year, y = n_phds, 
+             color = field)) + #<<
+  geom_point() +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 7)) +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+- __We should NOT display multiple time series with just points!__
+
+
+]
+.pull-right[
+
+```{r ref.label="color-points", fig.height=7, fig.align='center', echo = FALSE}
+```
+
+]
+
+---
+
+## Plotting several time series - use lines!
+
+
+.pull-left[
+```{r color-lines, eval = FALSE}
+stats_phds %>%
+  ggplot(aes(x = year, y = n_phds, 
+             color = field)) + #<<
+  geom_line() + #<<
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 7)) +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+- Lines alleviate issue of times series running into each other which is difficult to read with points
+]
+.pull-right[
+
+```{r ref.label="color-lines", fig.height=7, fig.align='center', echo = FALSE}
+```
+
+]
+
+---
+
+## Use [`ggrepel`](https://ggrepel.slowkow.com/articles/examples.html) to directly label lines
+
+```{r, echo = FALSE, fig.align='center'}
+stats_phds_2017 <- stats_phds %>%
+  filter(year == 2017)
+
+# Access the ggrepel package:
+# install.packages("ggrepel")
+library(ggrepel)
+stats_phds %>%
+  ggplot(aes(x = year, y = n_phds, color = field)) +
+  geom_line() +
+  # Add the labels:
+  geom_text_repel(data = stats_phds_2017,
+                  aes(label = field),
+                  size = 3, 
+                  # Drop the segment connection:
+                  segment.color = NA, 
+                  # Move labels up or down based on overlap
+                  direction = "y",
+                  # Try to align the labels horizontally on the left hand side
+                  hjust = "left") +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year),
+                     # Update the limits so that there is some padding on the
+                     # x-axis but don't label the new maximum
+                     limits = c(min(stat_phd_year_summary$year),
+                                max(stat_phd_year_summary$year) + 3)) +
+  theme_bw() +
+  # Drop the legend
+  theme(legend.position = "none") +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+
+---
+
+## How do we plot many lines? NOT LIKE THIS!
+
+```{r, echo = FALSE, fig.align='center'}
+phd_field %>%
+  ggplot(aes(x = year, y = n_phds, color = field)) +
+  geom_line() +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+```
+
+---
+
+## Instead we highlight specific lines
+
+```{r, echo = FALSE, fig.align='center'}
+# First display the background lines using the full dataset with those two fields 
+# filtered out:
+phd_field %>%
+  # The following line says: NOT (field in c("Biometrics and biostatistics", "Statistics (mathematics)"))
+  filter(!(field %in% c("Biometrics and biostatistics", 
+                        "Statistics (mathematics)"))) %>%
+  ggplot() +
+  # Add the background lines - need to specify the group to be the field
+  geom_line(aes(x = year, y = n_phds, group = field),
+            color = "gray", size = .5, alpha = .5) +
+  # Now add the layer with the lines of interest:
+  geom_line(data = filter(phd_field,
+                          # Note this is just the opposite of the above since ! is removed
+                          field %in% c("Biometrics and biostatistics", 
+                                       "Statistics (mathematics)")),
+            aes(x = year, y = n_phds, color = field),
+            # Make the size larger
+            size = .75, alpha = 1) +
+  scale_x_continuous(breaks = unique(stat_phd_year_summary$year),
+                     labels = unique(stat_phd_year_summary$year)) +
+  theme_bw() +
+  theme(legend.position = "bottom", 
+        # Drop the panel lines making the gray difficult to see
+        panel.grid = element_blank()) +
+  labs(x = "Year", y = "Number of PhDs",
+       title = "Number of Statistics-related PhDs awarded over time",
+       color = "Field")
+  
+```
+
+---
+
+## What about Nightingale's rose diagram?
+
+```{r, echo = FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("https://daily.jstor.org/wp-content/uploads/2020/08/florence_nightingagle_data_visualization_visionary_1050x700.jpg")
+```
+
+---
+
+## What about Nightingale's rose diagram?
+
+```{r, echo = FALSE, fig.align='center'}
+library(HistData)
+
+crimean_war_data <- Nightingale %>%
+  dplyr::select(Date, Month, Year, Disease, Wounds, Other) %>%
+  # Now pivot those columns to take up separate rows:
+  pivot_longer(Disease:Other,
+               names_to = "cause", values_to = "count")
+
+crimean_war_data <- crimean_war_data %>%
+  mutate(time_period = ifelse(Date <= as.Date("1855-03-01"),
+                              "April 1854 to March 1855", 
+                              "April 1855 to March 1856"))
+crimean_war_data %>% 
+  # Manually relevel it to match the original plot
+  mutate(Month = fct_relevel(Month, 
+                             "Jul", "Aug", "Sep", "Oct", "Nov",
+                             "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun")) %>%
+  ggplot(aes(x = Month, y = count)) + 
+  geom_col(aes(fill = cause), width = 1, 
+           position = "identity", alpha = 0.5) + 
+  coord_polar() + 
+  facet_wrap(~ time_period, ncol = 2) +
+  scale_fill_manual(values = c("skyblue3", "grey30", "firebrick")) +
+  scale_y_sqrt() +
+  theme_void() +
+  # All of this below is to just customize the theme in a way that we are
+  # close to resembling the original plot (ie lets make it look old!)
+  theme(axis.text.x = element_text(size = 9),
+        strip.text = element_text(size = 11),
+        legend.position = "bottom",
+        plot.background = element_rect(fill = alpha("cornsilk", 0.5)),
+        plot.margin = unit(c(10, 10, 10, 10), "pt"),
+        plot.title = element_text(vjust = 5)) +
+  labs(title = "Diagram of the Causes of Mortality in the Army in the East")
+```
+
+
+---
+
+## What about displaying lines instead?
+
+```{r, echo = FALSE, fig.align='center'}
+crimean_war_data %>% 
+  ggplot(aes(x = Date, y = count, color = cause)) + 
+  geom_line() +
+  # Add a reference line at the cutoff point
+  geom_vline(xintercept = as.Date("1855-03-01"), linetype = "dashed",
+             color = "gray") +
+  scale_color_manual(values = c("skyblue3", "grey30", "firebrick")) +
+  scale_y_sqrt() +
+  # Format to use abbreviate month %b with year %Y
+  scale_x_date(date_labels = "%b %Y") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "Diagram of the Causes of Mortality in the Army in the East",
+       y = "sqrt(counts)", x = "Date")
+```
+
+
+---
+
+## Storytelling with animation...
+
+```{r, echo = FALSE}
+f1_data_ex <- read_csv('https://raw.githubusercontent.com/meghall06/CMU-36-315-site/main/data/constructor_pts.csv') %>%
+  filter(name %in% c("McLaren", "Renault", "Racing Point"),
+         year == 2020)
+```
+
+.pull-left[
+
+```{r f1-static, eval = FALSE}
+f1_data_ex %>%
+  ggplot(aes(x = round, y = points, 
+             group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw()
+```
+
+- Can see the accumulated points increasing over time for each team
+
+- But we could _incrementally_ reveal the results at each stage __to emphasize the story of progression__
+
+]
+
+.pull-right[
+```{r ref.label = "f1-static", echo = FALSE, fig.align='center', fig.height=7}
+
+```
+
+]
+
+---
+
+## Use [`gganimate`](https://gganimate.com/) to add animations
+
+.pull-left[
+
+```{r f1-anim, eval = FALSE}
+library(gganimate)
+f1_data_ex %>%
+  ggplot(aes(x = round, y = points, 
+             group = name, color = name)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(1, 17, 1)) +
+  labs(title = "The race for third place in the 2020 F1 season",
+       y = "Accumulated points", x = NULL) +
+  theme_bw() +
+  # Reveal the results by round
+  transition_reveal(round) #<<
+```
+
+- Emphasize the intermediate results through animation with the `transition_reveal()` function
+
+]
+
+.pull-right[
+```{r ref.label = "f1-anim", echo = FALSE, fig.align='center', fig.height=7}
+
+```
+
+]
+
+---
+
+## Using animation to add a dimension
+
+.pull-left[
+
+```{r housing-static, eval = FALSE}
+txhousing %>% 
+  group_by(city, year) %>% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %>% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  scale_color_manual(values = c("black", "darkred")) +
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, 
+                     name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", 
+       y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red")
+```
+
+
+]
+.pull-right[
+
+```{r ref.label="housing-static", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+
+
+]
+
+---
+
+## Using animation to add a dimension
+
+.pull-left[
+
+```{r housing-anim, eval = FALSE}
+txhousing %>% 
+  group_by(city, year) %>% 
+  summarize(median = mean(median, na.rm = TRUE),
+            listings = mean(listings, na.rm = TRUE)) %>% 
+  ggplot(aes(x = median, y = listings, 
+             color = (city == "Houston"),
+             size = (city == "Houston"))) +
+  geom_point(alpha = 0.5, show.legend = FALSE) +
+  scale_color_manual(values = c("black", "darkred")) +
+  scale_size_manual(values = c(2, 4)) +
+  scale_x_continuous(labels = scales::dollar, 
+                     name = "Median Price") +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  theme_bw() +
+  labs(x = "Median Price", y = "Avg. of Monthly Listings",
+       subtitle = "Houston in red", 
+       title = "Year: {frame_time}") + #<<
+  transition_time(year) #<<
+```
+
+
+]
+.pull-right[
+
+```{r ref.label="housing-anim", fig.align='center', fig.height=7, echo = FALSE}
+
+```
+
+
+]
+
+
+---
+
+# Reminders about animation
+
+Some key points to think about before adding animation to a visualization:
+
+1. Always make and describe the original / base graphic first that does NOT include animation.
+
+2. Before adding animation to the graph, ask yourself: How would animation give you additional insights about the data **that you would otherwise not be able to**?
+
+3. Never add animation just because it's cool! 
+
+4. When presenting, make sure you explain exactly what is being displayed with animation and what within the animation you want to emphasize. This will help you determine if animation is actually worth including.
+
+
+---
+class: center, middle
+
+# Next time: [`htmlwidgets`](http://www.htmlwidgets.org/index.html) and dashboards
+
+__Report due Friday Oct 14th by 5 PM EDT via email!__ 
+
+Recommended reading: 
+
+[CW CH 13 Visualizing time series and other functions of an independent variable](https://clauswilke.com/dataviz/time-series.html)
+
+[CW CH 14 Visualizing trends](https://clauswilke.com/dataviz/visualizing-trends.html)
+
+[`gganimate` package](https://gganimate.com/)
+
+
+
+

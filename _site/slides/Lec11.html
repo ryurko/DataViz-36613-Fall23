@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>36-613: Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor Ron Yurko" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# 36-613: Data Visualization
+]
+.subtitle[
+## Visualizing Text Data
+]
+.author[
+### Professor Ron Yurko
+]
+.date[
+### 10/5/2022
+]
+
+---
+
+
+
+
+
+
+## Working with raw text data 
+
+- We'll work with script from the best episode of ['The Office': Season 4, Episode 13 - 'Dinner Party'](https://en.wikipedia.org/wiki/Dinner_Party_(The_Office))
+
+- We can access the script using the [`schrute` package (yes this is a real thing)](https://cran.r-project.org/web/packages/schrute/vignettes/theoffice.html):
+
+
+```r
+library(tidyverse)
+library(schrute)
+
+# Create a table from this package just corresponding to the Dinner Party episode:
+dinner_party_table &lt;- theoffice %&gt;%
+  filter(season == 4, episode == 13) %&gt;%
+  # Just select columns of interest:
+  dplyr::select(index, character, text)
+head(dinner_party_table)
+```
+
+```
+## # A tibble: 6 × 3
+##   index character text                                                          
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;                                                         
+## 1 16791 Stanley   This is ridiculous.                                           
+## 2 16792 Phyllis   Do you have any idea what time we'll get out of here?         
+## 3 16793 Michael   Nobody likes to work late, least of all me. Do you have plans…
+## 4 16794 Jim       Nope I don't, remember when you told us not to make plans 'ca…
+## 5 16795 Michael   Yes I remember. Mmm, this is B.S. This is B.S. Why are we her…
+## 6 16796 Dwight    Thank you Michael.
+```
+
+---
+
+## Bag of Words representation of text
+
+- Most common way to store text data is with a __document-term matrix__ (DTM):
+
+|            | Word 1   | Word 2   | `\(\dots\)`  | Word `\(J\)` |
+| ---------- | -------- | -------- | -------- | -------- |
+| Document 1 | `\(w_{11}\)` | `\(w_{12}\)` | `\(\dots\)`  | `\(w_{1J}\)` |
+| Document 2 | `\(w_{21}\)` | `\(w_{22}\)` | `\(\dots\)`  | `\(w_{2J}\)` |
+| `\(\dots\)`    | `\(\dots\)`  | `\(\dots\)`  | `\(\dots\)`  | `\(\dots\)`  |
+| Document N | `\(w_{N1}\)` | `\(w_{N2}\)` | `\(\dots\)`  | `\(w_{NJ}\)` |
+
+- `\(w_{ij}\)`: count of word `\(j\)` in document `\(i\)`, aka _term frequencies_
+
+--
+
+Two additional ways to reduce number of columns:
+
+1. __Stop words__: remove extremely common words (e.g., of, the, a)
+
+2. __Stemming__: Reduce all words to their "stem"
+
+  - For example: Reducing = reduc. Reduce = reduc. Reduces = reduc.
+
+Easy to convert text into DTM format using [`tidytext` package](https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html)
+
+---
+
+## Tokenize text into long format
+
+- Convert raw text into long, tidy table with one-token-per-document-per-row
+
+  - A __token__ equals a unit of text - typically a word
+  
+
+```r
+library(tidytext)
+tidy_dinner_party_tokens &lt;- dinner_party_table %&gt;%
+* unnest_tokens(word, text)
+# View the first so many rows:
+head(tidy_dinner_party_tokens)
+```
+
+```
+## # A tibble: 6 × 3
+##   index character word      
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;     
+## 1 16791 Stanley   this      
+## 2 16791 Stanley   is        
+## 3 16791 Stanley   ridiculous
+## 4 16792 Phyllis   do        
+## 5 16792 Phyllis   you       
+## 6 16792 Phyllis   have
+```
+
+
+---
+
+## Remove stop words and apply stemming
+
+.pull-left[
+
+- Load `stop_words` from `tidytext`
+
+
+```r
+data(stop_words)
+
+tidy_dinner_party_tokens &lt;- tidy_dinner_party_tokens %&gt;%
+* filter(!(word %in% stop_words$word))
+
+head(tidy_dinner_party_tokens)
+```
+
+```
+## # A tibble: 6 × 3
+##   index character word      
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;     
+## 1 16791 Stanley   ridiculous
+## 2 16792 Phyllis   idea      
+## 3 16792 Phyllis   time      
+## 4 16793 Michael   likes     
+## 5 16793 Michael   late      
+## 6 16793 Michael   plans
+```
+
+]
+
+--
+
+.pull-right[
+
+- Use [`SnowballC` package](https://cran.r-project.org/web/packages/SnowballC/SnowballC.pdf) to perform stemming
+
+
+```r
+library(SnowballC)
+
+tidy_dinner_party_tokens &lt;- tidy_dinner_party_tokens %&gt;%
+* mutate(stem = wordStem(word))
+
+head(tidy_dinner_party_tokens)
+```
+
+```
+## # A tibble: 6 × 4
+##   index character word       stem   
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;  
+## 1 16791 Stanley   ridiculous ridicul
+## 2 16792 Phyllis   idea       idea   
+## 3 16792 Phyllis   time       time   
+## 4 16793 Michael   likes      like   
+## 5 16793 Michael   late       late   
+## 6 16793 Michael   plans      plan
+```
+
+]
+
+---
+
+## Create word cloud using term frequencies
+
+__Word Cloud__: Displays all words mentioned across documents, where more common words are larger
+
+- To do this, you must compute the _total_ word counts:
+
+`$$w_{\cdot 1} = \sum_{i=1}^N w_{i1} \hspace{0.1in} \dots \hspace{0.1in} w_{\cdot J} = \sum_{i=1}^N w_{iJ}$$`
+
+- Then, the size of Word `\(j\)` is proportional to `\(w_{\cdot j}\)`
+
+--
+
+Create word clouds in `R` using [`wordcloud` package](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)
+
+Takes in two main arguments to create word clouds:
+
+1. `words`: vector of unique words
+
+2. `freq`: vector of frequencies
+
+
+---
+
+## Create word cloud using term frequencies
+
+.pull-left[
+
+
+```r
+token_summary &lt;- tidy_dinner_party_tokens %&gt;%
+  group_by(stem) %&gt;%
+  count() %&gt;%
+  ungroup() 
+
+library(wordcloud)
+*wordcloud(words = token_summary$stem,
+*         freq = token_summary$n,
+*         random.order = FALSE,
+          max.words = 100, 
+          colors = brewer.pal(8, "Dark2"))
+```
+
+- Set `random.order = FALSE` to place biggest words in center
+
+- Can customize to display limited # words (`max.words`)
+
+- Other options as well like `colors`
+
+]
+
+.pull-right[
+
+&lt;img src="figs/Lec11/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+
+]
+
+---
+
+## TF-IDF weighting
+
+- We saw that `michael` was the largest word, but what if I'm interested in comparing text across characters (i.e., documents)?
+
+--
+
+- It’s arguably of more interest to understand which words are frequently used in one set of texts but not the other, i.e., which words are unique?
+
+- Many text analytics methods will __down-weight__ words that occur frequently across all documents
+
+--
+
+- __Inverse document frequency (IDF)__: for word `\(j\)` we compute `\(\text{idf}_j = \log \frac{N}{N_j}\)`
+
+  - where `\(N\)` is number of documents, `\(N_j\)` is number of documents with word `\(j\)`
+  
+--
+
+- Compute __TF-IDF__ `\(= w_{ij} \times \text{idf}_j\)`
+
+---
+
+## TF-IDF example with characters
+
+Compute and join TF-IDF using `bind_tf_idf()`:
+
+
+```r
+character_token_summary &lt;- tidy_dinner_party_tokens %&gt;%
+* group_by(character, stem) %&gt;%
+  count() %&gt;%
+  ungroup() 
+
+character_token_summary &lt;- character_token_summary %&gt;%
+* bind_tf_idf(stem, character, n)
+character_token_summary
+```
+
+```
+## # A tibble: 597 × 6
+##    character stem        n     tf   idf tf_idf
+##    &lt;chr&gt;     &lt;chr&gt;   &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+##  1 All       cheer       1 1      2.77  2.77  
+##  2 Andy      anim        1 0.0476 2.77  0.132 
+##  3 Andy      bet         1 0.0476 2.08  0.0990
+##  4 Andy      capit       1 0.0476 2.77  0.132 
+##  5 Andy      dinner      1 0.0476 0.981 0.0467
+##  6 Andy      flower      2 0.0952 2.77  0.264 
+##  7 Andy      hei         1 0.0476 1.39  0.0660
+##  8 Andy      helena      1 0.0476 2.77  0.132 
+##  9 Andy      hump        2 0.0952 2.77  0.264 
+## 10 Andy      michael     1 0.0476 0.981 0.0467
+## # … with 587 more rows
+## # ℹ Use `print(n = ...)` to see more rows
+```
+
+
+---
+
+## Top 10 words by TF-IDF for each character
+
+.pull-left[
+
+
+```r
+character_token_summary %&gt;%
+  filter(character %in% c("Michael", "Jan", "Jim", "Pam")) %&gt;%
+  group_by(character) %&gt;%
+* slice_max(tf_idf, n = 10, with_ties = FALSE) %&gt;%
+  ungroup() %&gt;%
+* mutate(stem = reorder_within(stem, tf_idf,
+*                              character)) %&gt;%
+  ggplot(aes(y = tf_idf, x = stem),
+         fill = "darkblue", alpha = 0.5) +
+  geom_col() +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~ character, ncol = 2, 
+*            scales = "free") +
+  labs(y = "TF-IDF", x = NULL)
+```
+
+- Bars can be simpler for comparison than several word clouds, to focus on top words
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec11/unnamed-chunk-7-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Sentiment Analysis
+
+- The visualizations so far only look at word _frequency_ (possibly weighted with TF-IDF)
+
+  - Doesn't tell you _how_ words are used
+  
+--
+
+- A common goal in text analysis is to try to understand the overall __sentiment__ or "feeling" of text, i.e., __sentiment analysis__
+
+- Typical approach:
+
+  1.  Find a sentiment dictionary (e.g., "positive" and "negative" words)
+  
+  2. Count the number of words belonging to each sentiment
+  
+  3. Using the counts, you can compute an "average sentiment" (e.g., positive counts - negative counts)
+  
+--
+
+- This is called a __dictionary-based approach__
+
+- There are many sentiment dictionaries already available
+
+- The __Bing__ dictionary (named after Bing Liu) provides 6,786 words that are either "positive" or "negative"
+
+---
+
+## Character sentiment analysis
+
+.pull-left[
+
+
+```r
+get_sentiments("bing")
+```
+
+```
+## # A tibble: 6,786 × 2
+##    word        sentiment
+##    &lt;chr&gt;       &lt;chr&gt;    
+##  1 2-faces     negative 
+##  2 abnormal    negative 
+##  3 abolish     negative 
+##  4 abominable  negative 
+##  5 abominably  negative 
+##  6 abominate   negative 
+##  7 abomination negative 
+##  8 abort       negative 
+##  9 aborted     negative 
+## 10 aborts      negative 
+## # … with 6,776 more rows
+## # ℹ Use `print(n = ...)` to see more rows
+```
+
+
+]
+
+--
+
+.pull-right[
+
+Join sentiment to token table (without stemming)
+
+
+```r
+tidy_all_tokens &lt;- dinner_party_table %&gt;%
+  unnest_tokens(word, text)
+
+tidy_sentiment_tokens &lt;- tidy_all_tokens %&gt;%
+* inner_join(get_sentiments("bing"))
+
+head(tidy_sentiment_tokens)
+```
+
+```
+## # A tibble: 6 × 4
+##   index character word       sentiment
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;    
+## 1 16791 Stanley   ridiculous negative 
+## 2 16793 Michael   likes      positive 
+## 3 16793 Michael   work       positive 
+## 4 16795 Michael   enough     positive 
+## 5 16795 Michael   enough     positive 
+## 6 16795 Michael   mad        negative
+```
+
+
+
+]
+
+---
+
+## Character sentiment analysis
+
+.pull-left[
+
+
+```r
+tidy_sentiment_tokens %&gt;%
+  group_by(character, sentiment) %&gt;%
+  summarize(n_words = n()) %&gt;%
+  ungroup() %&gt;%
+  group_by(character) %&gt;%
+  mutate(total_assigned_words = sum(n_words)) %&gt;%
+  ungroup() %&gt;%
+  mutate(character = 
+           fct_reorder(character, 
+                       total_assigned_words)) %&gt;%
+  ggplot(aes(x = character, y = n_words, 
+*            fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("red", "blue")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+
+]
+
+.pull-right[
+&lt;img src="figs/Lec11/unnamed-chunk-10-1.png" width="100%" /&gt;
+
+]
+
+---
+
+## Other functions of text
+
+- We've just focused on word counts - __but there are many functions of text__
+
+- For example: __number of unique words__ is often used to measure vocabulary
+
+&lt;img src="https://pbs.twimg.com/media/DxCgsrxWwAAOWO3.jpg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Main Takeaways
+
+- Text is arguably infinite-dimensional, and we need to (somehow) represent text with a finite number of dimensions
+
+- Most common representation: Bag of words and term frequencies (possibly weighted by TF-IDF)
+
+--
+
+- Word clouds are the most common way to visualize the most frequent
+words in a set of documents
+
+- TF-IDF weighting allows you to detect words that are uniquely used
+in certain documents
+
+- Common to plot the most "important words" of a set of documents,
+ordered by TF-IDF weights
+
+--
+
+- Can also measure the "sentiment" of text with sentiment-based dictionaries
+
+- Sentiment analyses are only as relevant as the dictionaries you use
+
+---
+class: center, middle
+
+# Next time: Dashboards
+
+__HW5 due today! Graphics Critique / Replication #2 due Friday Oct 7th!__ 
+
+Recommended reading: 
+
+[Text Mining With R](https://www.tidytextmining.com/)
+
+[Supervised Machine Learning for Text Analysis in R](https://smltar.com/)
+
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,293 @@
+---
+title: "Scatterplots and regression with categorical variables"
+author: "Professor Ron Yurko"
+output: html_document
+---
+
+#  Scatterplots with Penguins
+
+**The graphs below don't have proper titles, axis labels, legends, etc.  Please take care to do this on your own graphs.** Throughout this demo we will use the [`palmerpenguins` dataset](https://allisonhorst.github.io/palmerpenguins/articles/intro.html). To access the data, you will need to install the `palmerpenguins` package:
+
+```{r, eval = FALSE}
+install.packages("palmerpenguins")
+```
+
+# Geometric layer
+
+We use `geom_point()` to generate scatterplots (requires `x` and `y` aes)
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(palmerpenguins)
+data(penguins)
+
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point()
+```
+
+# Always adjust transparency!
+
+Scatterplots display the joint distribution of the variables along the `x` and `y` axes. You should always adjust the transparency of points via `alpha` to visualize overlap - providing a better understanding of joint frequency. This is especially important with larger datasets.
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5)
+```
+
+# Mapping Aesthetics
+
+##  Colors
+
+We can color by a third variable (e.g., different color for each category). 
+
+Note that you can put `color = ` inside `ggplot` or `geom_point`, both display the same visualization:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm, color = species)) +
+  geom_point(alpha = 0.5)
+```
+
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5, aes(color = species))
+```
+
+You can also color by a quantitative variable using a color scale/gradient:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5, aes(color = body_mass_g))
+```
+
+The default color gradient is not the most appealing, while there are a number of possibilities - blue to orange is a good choice since these colors are opposites on the color spectrum:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5, aes(color = body_mass_g)) +
+  scale_color_gradient(low = "darkblue", high = "darkorange")
+```
+
+##  Point size (`size`)
+
+We can also map variables to other aesthetics, e.g. `size`:
+
+```{r, warning=FALSE, message=FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5, aes(size = body_mass_g))
+```
+
+
+##  Point type (`shape`)
+
+... or the type (`shape`) of points:
+
+```{r, warning=FALSE, message=FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.5, aes(shape = species))
+```
+
+
+##  Combining aesthetics
+
+We can even do several of these at once:
+
+```{r, warning=FALSE, message=FALSE}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, y = bill_length_mm,
+             color = species, shape = island,
+             size = body_mass_g)) +
+  geom_point(alpha = 0.5)
+```
+
+
+The above graph may be a bit difficult to read, but it contains a lot of information in the sense that it is a 5-dimensional graphic:
+
++  `x` = bill depth (mm)
++  `y` = bill length (mm)
++  `color` = species
++  `size` = body mass (g)
++  `shape` = island
+
+But be careful! The more complications you add, the more difficult your graph is to explain.
+
+![](https://i.imgur.com/Rt3LdqG.gif)
+
+#  Regression with Penguins
+
+We will focus on predicting penguin bill depth (`bill_depth_mm`) based on the penguin's bill length (`bill_length_mm`) and `species`.  In particular, we will consider the following three linear regression models:
+
+1) `bill_depth_mm` ~ `bill_length_mm`
+2) `bill_depth_mm` ~ `bill_length_mm` + `species`
+3) `bill_depth_mm` ~ `bill_length_mm` + `species` + `bill_length_mm` $\times$ `species`
+
+## Simple Linear Regression (based only on bill length)
+
+First, we can run a simple linear regression (the first model) based only on bill length. We can display this line via `geom_smooth()`:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE)
+```
+
+And display the regression model output using `summary()`:
+
+```{r, warning = FALSE, message = FALSE}
+summary(lm(bill_depth_mm ~ bill_length_mm, data = penguins))
+```
+
+We can write this regression model as:
+
+$$\text{depth} \sim N(\beta_0 + \beta_L \cdot \text{length}, \sigma^2)$$
+
+Note that $\beta_0$ is the **intercept** and $\beta_L$ is the **slope**.
+
+Thus, our estimates are:
+
++ $\hat{\beta}_0 = 20.88547$
++ $\hat{\beta}_L = 12.43$
++ $\hat{\sigma}^2 = 1.922^2$
+
+## Multiple Linear Regression (Additive)
+
+We can also run the second model, which is based on length and species, but with only additive effects. First, we'll check the counts of the species variable to ensure that the species with the highest number of observations if the reference level (i.e., the first level for a factor variable):
+
+```{r}
+table(penguins$species)
+```
+
+Looks like we're lucky and that the `Adelie` species is the most popular and is already first due to alphabetical order. _What function would we need to do to re-order the variable?_
+
+Next, we'll fit the regression that accounts for `species` without an interaction - so it's just an additive effect:
+
+```{r}
+depth_lm_species_add <- lm(bill_depth_mm ~ bill_length_mm + species,
+                           data = penguins)
+summary(depth_lm_species_add)
+```
+
+This tells us that `Chinstrap` is different from `Adelie` and `Gentoo` is different from `Adelie`, but it does NOT tell us `Chinstrap` is different from `Gentoo`. That would require another model with a __reordered__ `species` variable. _Exercise: Reorder `species` so that `Gentoo` is the reference level and compare to the results above_.
+
+We can manually extract intercepts and coefficients to use for plotting (__read the code comments!__):
+
+```{r}
+# Calculate species-specific intercepts in order:
+intercepts <- # First for `Adelie` it's just the initial intercept
+  c(coef(depth_lm_species_add)["(Intercept)"],
+    # Next for `Chinstrap` it's the intercept plus the `Chinstrap` term:
+    coef(depth_lm_species_add)["(Intercept)"] + 
+      coef(depth_lm_species_add)["speciesChinstrap"],
+    # And finally for `Gentoo` it's again the intercept plus the `Gentoo` term
+    coef(depth_lm_species_add)["(Intercept)"] + 
+      coef(depth_lm_species_add)["speciesGentoo"])
+
+# Create a small table to store the intercept, slopes, and species:
+lines_tbl <- tibble("intercepts" = intercepts,
+                    # Slopes are the same for each, thus use rep()
+                    "slopes" = rep(coef(depth_lm_species_add)["bill_length_mm"],
+                                   3),
+                    # And the levels of species:
+                    "species" = levels(penguins$species))
+```
+
+
+We can now plot this model by specifying the regression lines with `geom_abline()` using the newly constructed `lines_tbl` as the data for this layer:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(data = lines_tbl,
+              aes(intercept = intercepts, slope = slopes,
+                  color = species)) +
+  labs(x = "Bill length (mm)", y = "Bill depth (mm)", 
+       title = "Bill depth versus weight by species")
+```
+
+This is a great example of [__Simpson's Paradox__](https://en.wikipedia.org/wiki/Simpson%27s_paradox)! We originally observed a negative linear relationship between depth and length, but now observe a positive linear relationship within species!
+
+## Multiple Linear Regression (Interactive)
+
+Next, we can run the third model, which is based on length and species, including interaction effects. This is the default type of model displayed when we map `species` to the color aesthetic for the `geom_smooth()` layer. In the plot below, we display across both layers, `geom_point()` and `geom_smooth()` by mapping `species` to color in the initial `ggplot` canvas construction:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Bill length (mm)", y = "Bill depth (mm)", 
+       title = "Bill depth versus weight by species")
+```
+
+What about the summary of this model? Is the inclusion of interaction terms relevant? Note that by default, multiplying two variables in the `lm()` formula below includes __both__ the additive __AND__ interaction terms.
+
+```{r}
+depth_lm_species_int <- lm(bill_depth_mm ~ bill_length_mm * species,
+                           data = penguins)
+summary(depth_lm_species_int)
+```
+
+The interaction terms do NOT appear to be necessary to include. This is justified by both the lack of significance and the slight drop in adjusted R-squared.
+
+## What about the intercept?
+
+Remember the meaning of the intercept term... that is not reasonable in this setting because penguins will never have bills with length of 0mm! We should update the additive model (since we found the interaction terms to not be meaningful) to remove the intercept. This can be done by adding a `0` term to the `lm()` formula:
+
+
+```{r}
+depth_lm_remove_b0 <- lm(bill_depth_mm ~ 0 + bill_length_mm + species,
+                         data = penguins)
+summary(depth_lm_remove_b0)
+```
+
+__What changed in the summary output? Why did that occur?__ 
+
+We can copy-and-paste our code from above to add these appropriate regression lines:
+
+
+```{r}
+# Calculate species-specific intercepts in order:
+new_intercepts <- # First for `Adelie` 
+  c(coef(depth_lm_remove_b0)["speciesAdelie"],
+    # Next for `Chinstrap` 
+    coef(depth_lm_remove_b0)["speciesChinstrap"],
+    # And finally for `Gentoo` 
+    coef(depth_lm_remove_b0)["speciesGentoo"])
+
+# Create a small table to store the intercept, slopes, and species:
+new_lines_tbl <- 
+  tibble("intercepts" = new_intercepts,
+         # Slopes are the same for each, thus use rep()
+         "slopes" = rep(coef(depth_lm_remove_b0)["bill_length_mm"],
+                        3),
+         # And the levels of species:
+         "species" = levels(penguins$species))
+```
+
+
+Again, create the display:
+
+```{r, warning = FALSE, message = FALSE}
+penguins %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(data = new_lines_tbl,
+              aes(intercept = intercepts, slope = slopes,
+                  color = species)) +
+  labs(x = "Bill length (mm)", y = "Bill depth (mm)", 
+       title = "Bill depth versus weight by species")
+```
+
+Why is this the same display as before? [Here's a great description](https://stats.stackexchange.com/questions/26176/removal-of-statistically-significant-intercept-term-increases-r2-in-linear-mo/26205#26205) of why we observe a higher R-squared with the intercept-term excluded from the model.
+
+

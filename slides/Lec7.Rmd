@@ -1,0 +1,531 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "More 2D Quant. and Intro to High Dimensional Data"  
+author: 
+  - "Professor Ron Yurko"
+date: '9/21/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec7/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+```{r, include = FALSE}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+
+## 2D quantitative data
+
+- We're working with two variables: $(X, Y) \in \mathbb{R}^2$, i.e., dataset with $n$ rows and 2 columns
+
+- Goals:
+
+  - describing the relationships between two variables
+  
+  - describing the conditional distribution $Y | X$ via regression analysis
+  
+  - __TODAY: describing the joint distribution $X,Y$ via contours, heatmaps, etc.__
+
+- Few big picture ideas to keep in mind:
+
+  - scatterplots are by far the most common visual
+  
+  - regression analysis is by far the most popular analysis (you have a whole class on this...)
+  
+  - relationships may vary across other variables, e.g., categorical variables
+  
+---
+
+## Visuals to focus on the joint distribution
+
+```{r, echo = FALSE}
+ohtani_pitches <- read_csv("https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv")
+```
+
+.pull-left[
+
+- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
+
+```{r ohtani-pitches, eval = FALSE}
+ohtani_pitches %>%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+  coord_fixed() + #<<
+  theme_bw()
+```
+
+- Where are the high/low concentrations of X,Y?
+
+- How do we display concentration for 2D data?
+
+- `coord_fixed()` so axes match with unit scales
+
+]
+
+.pull-right[
+```{r ref.label="ohtani-pitches", echo = FALSE, fig.height=8}
+```
+
+]
+
+---
+
+## Going from 1D to 2D density estimation
+
+In 1D: estimate density $f(x)$, assuming that $f(x)$ is _smooth_:
+
+$$
+\hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
+$$
+
+--
+
+In 2D: estimate joint density $f(x_1, x_2)$
+
+$$\hat{f}(x_1, x_2) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h_1h_2} K(\frac{x_1 - x_{i1}}{h_1}) K(\frac{x_2 - x_{i2}}{h_2})$$
+
+--
+
+In 1D there was one bandwidth, now __we have two bandwidths__
+
+  - $h_1$: controls smoothness as $X_1$ changes, holding $X_2$ fixed
+  - $h_2$: controls smoothness as $X_2$ changes, holding $X_1$ fixed
+
+Again Gaussian kernels are the most popular...
+
+---
+
+## So how do we display densities for 2D data?
+
+```{r, echo = FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("https://www.byclb.com/TR/Tutorials/neural_networks/Ch_4_dosyalar/image044.gif")
+```
+
+
+---
+
+## How to read contour plots?
+
+Best known in topology: outlines (contours) denote levels of elevation
+
+```{r, echo = FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("https://preview.redd.it/2rbe8s8t7re31.jpg?auto=webp&s=eed849b180dd803d394f556432df026c4cd1dae2")
+```
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+```{r ohtani-pitches-contour, eval = FALSE}
+ohtani_pitches %>%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_point(alpha = 0.2) +
+  geom_density2d() + #<<
+  coord_fixed() +
+  theme_bw()
+```
+
+- Use `geom_density2d` to display contour lines
+
+- Inner lines denote "peaks"
+
+]
+
+.pull-right[
+```{r ref.label="ohtani-pitches-contour", echo = FALSE, fig.height=8}
+```
+
+]
+
+
+---
+
+## Display 2D contour plot
+
+.pull-left[
+
+
+```{r ohtani-pitches-contour-fill, eval = FALSE}
+ohtani_pitches %>%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  stat_density2d(aes(fill = after_stat(level)), #<<
+                 geom = "polygon") + #<<
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+  scale_fill_gradient(low = "darkblue", #<<
+                      high = "darkorange") + #<<
+  theme_bw()
+```
+
+- Use `stat_density2d` for additional features
+
+- May be easier to read than nested lines with color
+
+- __Default color scale is awful!__ Always change it!
+
+
+]
+
+.pull-right[
+```{r ref.label="ohtani-pitches-contour-fill", echo = FALSE, fig.height=8}
+```
+
+]
+
+---
+
+## Visualizing grid heat maps
+
+.pull-left[
+
+
+```{r ohtani-pitches-heatmap, eval = FALSE}
+ohtani_pitches %>%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  stat_density2d(aes(fill = after_stat(density)), #<<
+                 geom = "tile", #<<
+                 contour = FALSE) + #<<
+  geom_point(alpha = 0.2) +
+  coord_fixed() +
+  scale_fill_gradient(low = "white", #<<
+                      high = "red") + #<<
+  theme_bw()
+```
+
+- Divide the space into a grid and color the grid according to high/low values
+
+- Common to treat "white" as empty color
+
+]
+
+.pull-right[
+```{r ref.label="ohtani-pitches-heatmap", echo = FALSE, fig.height=8}
+```
+
+]
+
+---
+
+## Alternative idea: hexagonal binning
+
+.pull-left[
+
+
+```{r ohtani-pitches-hexbin, eval = FALSE}
+ohtani_pitches %>%
+  ggplot(aes(x = plate_x, y = plate_z)) +
+  geom_hex() + #<<
+  coord_fixed() +
+  scale_fill_gradient(low = "darkblue", 
+                      high = "darkorange") + 
+  theme_bw()
+```
+
+- Can specify `binwidth` in both directions
+
+- 2D version of histogram 
+
+- _Need to install `hexbin` package_
+
+
+]
+
+.pull-right[
+```{r ref.label="ohtani-pitches-hexbin", echo = FALSE, fig.height=8}
+```
+
+]
+
+---
+
+## Back to the penguins...
+
+Pretend I give you this `penguins` dataset and I ask you to make a plot __for every pairwise comparison__...
+
+```{r}
+library(palmerpenguins)
+penguins %>% slice(1:3)
+```
+
+--
+
+We can create a __pairs plot__ to see __all__ pairwise relationships __in one plot__
+
+Pairs plot can include the various kinds of pairwise plots we've seen:
+
+- Two quantitative variables: scatterplot
+
+- One categorical, one quantitative: side-by-side violins, stacked
+histograms, overlaid densities
+
+- Two categorical: stacked bars, side-by-side bars, mosaic plots
+
+---
+
+## Pairs plots for penguins
+
+.pull-left[
+
+Use the [`GGally`](https://ggobi.github.io/ggally/index.html) package
+
+```{r pairs-plot, eval = FALSE}
+library(GGally)
+penguins %>% 
+  ggpairs(columns = 3:6) #<<
+```
+
+Main arguments to change are:
+
++ `data`: specifies the dataset
+
++ `columns`: columns of data you want in the plot (can specify with vector of column names or numbers referring to the column indices)
+
++ `mapping`: aesthetics using `aes()` - most important is `aes(color = <variable name>)`
+
+Created pairs plot above by specifying `columns` as the four columns of continuous variables (columns 3-6)
+
+
+]
+
+.pull-right[
+```{r ref.label="pairs-plot", echo = FALSE, fig.height=7}
+
+```
+
+
+]
+
+---
+
+## Pairs plots for penguins
+
+.pull-left[
+
+Annoying aspect: change `alpha` directly with `aes` when using `ggpairs`:
+
+```{r pairs-plot-alpha, eval = FALSE}
+penguins %>% 
+  ggpairs(columns = 3:6,
+          mapping = aes(alpha = 0.5)) #<<
+```
+
+- Diagonal: marginal distributions
+
+- Off-diagonal: joint (pairwise) distributions or statistical summaries (e.g., correlation)
+
+- Matrix of plots is symmetric
+
+]
+
+.pull-right[
+```{r ref.label="pairs-plot-alpha", echo = FALSE, fig.height=7}
+
+```
+
+
+]
+
+---
+
+## Read Demo3 for more info on customization!
+
+.pull-left[
+
+```{r, echo = FALSE, fig.height=7}
+penguins %>% 
+  ggpairs(columns = c("bill_length_mm", "body_mass_g", "island"),
+          mapping = aes(alpha = 0.5, color = species), 
+          lower = list(
+            continuous = "smooth_lm", 
+            combo = "facetdensitystrip"
+          ),
+          upper = list(
+            continuous = "cor",
+            combo = "facethist"
+          )
+  )
+```
+
+
+]
+
+.pull-right[
+
+```{r, echo = FALSE, fig.height=7}
+penguins %>%
+  dplyr::select(species, body_mass_g, ends_with("_mm")) %>%
+  ggpairs(mapping = aes(color = species, alpha = 0.5),
+          columns = c("flipper_length_mm", "body_mass_g",
+                      "bill_length_mm", "bill_depth_mm")) +
+  scale_colour_manual(values = c("darkorange","purple","cyan4")) +
+  scale_fill_manual(values = c("darkorange","purple","cyan4")) +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7))
+```
+
+]
+
+---
+
+## What about high-dimensional data?
+
+Consider this [dataset]((https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-12-21/readme.md)) containing nutrional information about Starbucks drinks:
+
+```{r, warning = FALSE, message = FALSE}
+starbucks <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv") %>%
+  # Convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g), fiber_g = as.numeric(fiber_g))
+starbucks %>% slice(1)
+```
+
+
+#### How do we visualize this dataset? 
+
+--
+
+- Tedious task: make a series of pairs plots (one giant pairs plot would overwhelming)
+
+
+---
+
+## What about high-dimensional data?
+
+
+```{r, warning = FALSE, message = FALSE}
+starbucks <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv") %>%
+  # Convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g), fiber_g = as.numeric(fiber_g))
+starbucks %>% slice(1)
+```
+
+#### Goals to keep in mind with visualizing high-dimensional data
+
+- __Visualize structure among observations__ using distances matrices, projections (Monday's lecture)
+
+- __Visualize structure among variables__ using correlation as "distance"
+
+
+---
+
+## Correlogram to visualize correlation matrix
+
+.pull-left[
+
+Use the [`ggcorrplot`](https://rpkgs.datanovia.com/ggcorrplot/) package
+
+```{r cor-plot, eval = FALSE}
+starbucks_quant_cor <- 
+  cor(dplyr::select(starbucks, #<<
+                    serv_size_m_l:caffeine_mg))
+
+library(ggcorrplot)
+ggcorrplot(starbucks_quant_cor, #<<
+           method = "circle",
+           hc.order = TRUE,
+           type = "lower")
+```
+
+- Compute the correlation matrix (using quantitative variables)
+
+- Can rearrange using `hc.order = TRUE` based on clustering (next week!)
+
+- See Demo3 for more examples...
+
+]
+
+.pull-right[
+
+```{r ref.label="cor-plot", echo = FALSE, fig.height=7}
+
+```
+
+
+]
+
+---
+
+## Parallel coordinates plot with [`ggparcoord`](https://ggobi.github.io/ggally/reference/ggparcoord.html)
+
+.pull-left[
+
+- Display each variable side-by-side on standardized axis
+
+- Connect observations with lines
+
+```{r par-coord, eval = FALSE}
+starbucks %>%
+  ggparcoord(columns = 5:15, #<<
+             alphaLines = .1) + #<<
+  theme(axis.text.x = 
+          element_text(angle = 90))
+```
+
+- Can change `scale` method for y-axis
+
+- Useful for moderate number of observations and variables
+
+- __How do we order the x-axis?__
+
+- __Does this agree with the correlogram?__
+
+]
+.pull-right[
+
+```{r ref.label="par-coord", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+---
+class: center, middle
+
+# Next time: More High-Dimensional Data
+
+Reminder: __HW3 due tonight!__ 
+
+Recommended reading: 
+
+[CW Chapter 12 Visualizing associations among two or more quantitative variables](https://clauswilke.com/dataviz/visualizing-associations.html)
+
+

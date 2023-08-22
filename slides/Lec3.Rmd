@@ -1,0 +1,449 @@
+---
+title: "36-613: Data Visualization"
+subtitle: "2D Categorical Data"  
+author: 
+  - "Professor Ron Yurko"
+date: '9/7/2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  fig.path = "figs/Lec3/"
+)
+xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#c41230",
+  secondary_color = "#4d5051",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+## 2D categorical basics: marginal / conditional distribution 
+
+```{r, warning = FALSE, message = FALSE, fig.align='center'}
+library(palmerpenguins)
+addmargins(table("Species" = penguins$species, "Island" = penguins$island))
+```
+
+- Column and row sums: marginal distributions (blue)
+
+- Values within rows: conditional distribution for `Island` given `Species` (orange)
+
+- Values within columns: conditional distribution for `Species` given `Island` (purple)
+
+- Bottom right: total number of observations (red)
+
+---
+
+## Connecting distributions to visualizations
+
+There are five distributions we may care about for two categorical variables $A$ and $B$:
+
+- __Marginals__:  $P(A)$ and $P(B)$
+
+- __Conditionals__: $P(A | B)$ and $P(B|A)$
+
+- __Joint__: $P(A, B)$
+
+--
+
+We use bar charts to visualize marginal distributions for categorical variables
+
+__How can we visualize the conditionals and joint distributions?__
+
+--
+
+Naive approaches to visualize:
+
+- Different conditionals, e.g., $P(A|B = b_1)$, $P(A | B = b_2)$, ..., could make a bar chart for each $b_1, b_2,...$
+
+- Joint distribution, could create a bar for each combination of $A$ and $B$
+
+We'll effectively make tweaks of these with __stacked__ and __side-by-side__ bar charts
+
+---
+
+## Stacked bar plots - a bar chart of spine charts
+
+.pull-left[
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(tidyverse)
+```
+
+
+```{r stacked-bar, fig.show = 'hide'}
+penguins %>%
+  ggplot(aes(x = species,
+             fill = island)) + #<<
+  geom_bar() + 
+  theme_bw()
+```
+
+- Easy to see marginal of `species`
+
+  - i.e., $P($ `x` $)$
+
+- Can see conditional of `island` | `species` 
+
+  - i.e., $P($ `fill` | `x` $)$
+
+- Harder to see conditional of `species` | `island`
+
+  - i.e., $P($ `x` | `fill` $)$
+
+]
+
+.pull-right[
+
+```{r ref.label = 'stacked-bar', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## Side-by-side bar plots
+
+.pull-left[
+
+
+```{r side-bar, fig.show = 'hide'}
+penguins %>%
+  ggplot(aes(x = species,
+             fill = island)) + 
+  geom_bar(position = "dodge") + #<<
+  theme_bw()
+```
+
+- Use `position = "dodge"` to move bars side-by-side (this applies to other visualizations also)
+
+- Notice that some bars are dropped...
+
+]
+
+.pull-right[
+
+```{r ref.label = 'side-bar', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+
+---
+
+## Side-by-side bar plots
+
+.pull-left[
+
+
+```{r side-bar-upd, fig.show = 'hide'}
+penguins %>%
+  ggplot(aes(x = species,
+             fill = island)) + 
+  geom_bar(position = 
+             position_dodge(preserve = "single")) + #<<
+  theme_bw()
+```
+
+- Easy to see conditional of `island` | `species`
+
+  - i.e., $P($ `fill` | `x` $)$
+
+- Can see conditional of `species` | `island` 
+
+  - i.e., $P($ `x` | `fill` $)$
+
+- Hard to see marginals...
+  
+__What else do we see?__
+
+]
+
+.pull-right[
+
+```{r ref.label = 'side-bar-upd', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+---
+
+## What do you prefer?
+
+.pull-left[
+
+```{r ref.label = 'stacked-bar', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+]
+
+.pull-right[
+
+```{r ref.label = 'side-bar-upd', echo = FALSE, fig.width=5, fig.height=4}
+```
+
+
+]
+
+---
+
+## Inference for categorical data with the chi-square test
+
+For 1D categorical data:
+
+- __Null hypothesis__ $H_0$: $p_1 = p_2 = \dots = p_K$, compute the test statistic:
+
+$$
+\chi^2 = \sum_{j=1}^K \frac{(O_j - E_j)^2}{E_j}
+$$
+
+- $O_j$: observed counts in category $j$
+
+- $E_j$: expected counts under $H_0$, i.e., each category is equally to occur $n / K = p_1 = p_2 = \dots = p_K$
+
+--
+
+```{r}
+chisq.test(table(penguins$species)) #<<
+```
+
+---
+
+## Hypothesis testing review
+
+.pull-left[
+Computing $p$-values works like this:
+
+- Choose a test statistic.
+
+- Compute the test statistic in your dataset.
+
+- Is test statistic "unusual" compared to what I would expect under $H_0$?
+
+- Compare $p$-value to __target error rate__ $\alpha$ (typically referred to as target level $\alpha$ )
+
+- Typically choose $\alpha = 0.05$ 
+
+  - i.e., if we reject null  hypothesis at $\alpha = 0.05$ then, assuming $H_0$ is true, there is a 5% chance it is a false positive (aka Type 1 error)
+]
+
+--
+
+
+.pull-right[
+
+```{r, echo = FALSE, out.width = '100%', fig.align='center'}
+knitr::include_graphics("https://measuringu.com/wp-content/uploads/2021/04/042121-F2.jpg") 
+```
+
+]
+
+---
+
+## Inference for 2D categorical data 
+
+Again we use the __chi-square test__:
+
+- __Null hypothesis__ $H_0$: variables $A$ and $B$ are independent, compute the test statistic:
+
+
+$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$
+
+
+- $O_{ij}$: observed counts in contingency table
+
+- $E_{ij}$: expected counts under $H_0$
+
+$$
+\begin{aligned}
+E_{ij} &= n \cdot P(A = a_i, B = b_j) \\
+&= n \cdot P(A = a_i) P(B = b_j) \\
+&= n \cdot \left( \frac{n_{i \cdot}}{n} \right) \left( \frac{ n_{\cdot j}}{n} \right)
+\end{aligned}
+$$
+
+---
+
+## Inference for 2D categorical data 
+
+Again we use the __chi-square test__:
+
+- __Null hypothesis__ $H_0$: variables $A$ and $B$ are independent, compute the test statistic:
+
+$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$
+
+- $O_{ij}$: observed counts in contingency table
+
+- $E_{ij}$: expected counts under $H_0$
+
+```{r}
+chisq.test(table(penguins$species, penguins$island)) #<<
+```
+
+
+---
+
+## Visualize independence test with mosaic plots
+
+Two variables are __independent__ if knowing the level of one tells us nothing about the other
+
+- i.e.  $P(A | B) = P(A)$, and that $P(A, B) = P(A) \times P(B)$
+
+--
+
+.pull-left[
+
+Create a __mosaic__ plot using __base `R`__
+
+```{r mosaic, eval = FALSE}
+mosaicplot(table(penguins$species, #<<
+                 penguins$island)) #<<
+```
+
+- spine chart _of spine charts_
+
+- width $\propto$ marginal of `species` (columns)
+
+- height $\propto$ conditional of `island` | `species` (rows | columns)
+
+- area $\propto$ joint distribution
+
+__[`ggmosaic`](https://github.com/haleyjeppson/ggmosaic) has issues...__
+]
+.pull-right[
+```{r ref.label = 'mosaic', echo = FALSE, fig.height=6}
+
+```
+]
+
+---
+
+## Shade by _Pearson residuals_
+
+- The __test statistic__ is: 
+
+$$\chi^2 = \sum_{i}^{K_A} \sum_{j}^{K_B} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$
+
+- Define the _Pearson residuals_ as:
+
+$$r_{ij} = \frac{O_{ij} - E_{ij}}{\sqrt{E_{ij}}}$$
+
+- Sidenote: In general, Pearson residuals are $\frac{\text{residuals}}{\sqrt{\text{variance}}}$
+
+--
+
+- $r_{ij} \approx 0 \rightarrow$ observed counts are close to expected counts
+
+- $|r_{ij}| > 2 \rightarrow$ "significant" at level $\alpha = 0.05$.
+
+--
+
+- Very positive $r_{ij} \rightarrow$ more than expected, while very negative $r_{ij} \rightarrow$ fewer than expected
+
+- Mosaic plots: Color by Pearson residuals to tell us which combos are much bigger/smaller than expected.
+
+---
+
+## Shade by _Pearson residuals_
+
+```{r mosaic-shade, fig.align='center'}
+mosaicplot(table(penguins$species, penguins$island), shade = TRUE) #<<
+```
+
+
+__These variables are clearly NOT independent!__
+
+---
+
+## What about two variables that are independent?
+
+```{r mosaic-shade-sex, fig.align='center'}
+mosaicplot(table(penguins$island, penguins$sex), shade = TRUE,
+           # Change the plot title
+           main = "Distribution of penguins' sex does not vary across islands")  #<<
+```
+
+
+---
+
+## BONUS: Treemaps are an alternative to mosaic plots
+
+.pull-left[
+
+```{r treemap, eval = FALSE}
+library(treemapify)
+penguins %>%
+  group_by(species, island) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  ggplot(aes(area = count, subgroup = island,
+             label = species,
+             fill = interaction(species, island))) +
+  # 1. Draw species borders and fill colors
+  geom_treemap() +
+  # 2. Draw island borders
+  geom_treemap_subgroup_border() +
+  # 3. Print island text
+  geom_treemap_subgroup_text(place = "centre", grow = T, 
+                             alpha = 0.5, colour = "black",
+                             fontface = "italic", min.size = 0) +
+  # 4. Print species text
+  geom_treemap_text(colour = "white", place = "topleft", 
+                    reflow = T) +
+  guides(colour = "none", fill = "none")
+```
+
+]
+
+.pull-right[
+
+```{r ref.label = 'treemap', echo = FALSE, fig.align='center'}
+
+```
+
+- Use the [`treemapify` package](https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html)
+
+- Do NOT require the same categorical levels across subgroups
+
+
+]
+
+
+
+---
+class: center, middle
+
+# Next time: 2D categorical data
+
+Reminder: __HW1 due tonight!__ HW2 posted and due next week...
+
+Recommended reading: 
+
+[CW Chapter 11 Visualizing nested proportions](https://clauswilke.com/dataviz/nested-proportions.html)
+
+
+
