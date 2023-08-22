@@ -32,8 +32,8 @@ Additional `R` demos are available below in html format.
 
 | Demo | Topic                         | html                                                                               | Rmd                                                                                                              |
 |-----------|-----------------------------------------|-----------|-----------|
-| 0       | Installing R and RStudio | [`r icons::fontawesome$solid$laptop`](https://cmu-36613.netlify.app/demos/Demo0.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall22/blob/main/demos/Demo0.Rmd) |
-| 1       | Into the tidyverse | [`r icons::fontawesome$solid$laptop`](https://cmu-36613.netlify.app/demos/Demo1.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall22/blob/main/demos/Demo1.Rmd) |
+| 0       | Installing R and RStudio | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo0.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo0.Rmd) |
+| 1       | Into the tidyverse | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo1.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo1.Rmd) |
 
 
 ## Resources

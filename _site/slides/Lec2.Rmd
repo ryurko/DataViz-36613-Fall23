@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "1D Categorical Data"  
 author: 
   - "Professor Ron Yurko"
-date: '8/31/2022'
+date: '8/30/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec2/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -36,7 +35,7 @@ xaringanExtra::use_clipboard()
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
@@ -532,12 +531,9 @@ knitr::include_graphics("https://datachant.com/wp-content/uploads/2019/10/Bad-Pi
 
 ]
 
---
 
 .pull-right[
-```{r, echo = FALSE, out.width="90%", fig.align='center'}
-knitr::include_graphics("https://www.reactiongifs.us/wp-content/uploads/2013/05/this_is_useless_star_wars.gif")
-```
+
 ]
 
 #### You should almost always stick to bars!

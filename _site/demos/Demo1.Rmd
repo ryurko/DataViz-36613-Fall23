@@ -129,23 +129,26 @@ head(sel_penguins, n = 3)
 ```
 
 __We can [`arrange()`](https://dplyr.tidyverse.org/reference/arrange.html) our dataset to sort observations by variables__:
+
 ```{r arrange-penguins}
 bill_penguins <- arrange(sel_penguins, desc(bill_length_mm)) # use desc() for descending order
 head(bill_penguins, n = 3)
 ```
 
-__We can [`summarize()`](https://dplyr.tidyverse.org/reference/summarise.html) our dataset to one row based on functions of variables__
+__We can [`summarize()`](https://dplyr.tidyverse.org/reference/summarise.html) our dataset to one row based on functions of variables__:
+
 ```{r summarize-penguins}
 summarize(bill_penguins, max(bill_length_mm), median(flipper_length_mm))
 ```
-__We can [`mutate()`](https://dplyr.tidyverse.org/reference/mutate.html) our dataset to create new variables__ (mutate is a weird name...)
+
+__We can [`mutate()`](https://dplyr.tidyverse.org/reference/mutate.html) our dataset to create new variables__:
+
 ```{r mutate-penguins}
 new_penguins <- mutate(bill_penguins, 
                        bill_flipper_ratio = bill_length_mm / flipper_length_mm,
                        flipper_bill_ratio = flipper_length_mm / bill_length_mm)
 head(new_penguins, n = 1)
 ```
-
 
 How do we perform several of these actions?
 
@@ -157,7 +160,7 @@ That's awfully annoying to do, and also difficult to read...
 
 ## Enter the pipeline
 
-The `%>%` (_pipe_) operator is used in the `tidyverse` (from [`magrittr`](https://magrittr.tidyverse.org/articles/magrittr.html)) to chain commands together 
+The `%>%` (_pipe_) operator is used in the `tidyverse` (from [`magrittr`](https://magrittr.tidyverse.org/articles/magrittr.html)) to chain commands together. (Note: you can also use the built-in `|>` pipe that is native to new versions of `R` without loading the `tidyverse`.)
 
 `%>%` directs the __data analyis pipeline__: output of one function pipes into input of the next function
 
@@ -205,7 +208,7 @@ penguins %>%
 
 ## Putting it all together...
 
-As your own exercise, reate a __tidy__ dataset where each row = an island with the following variables:
+As your own exercise, create a __tidy__ dataset where each row == an island with the following variables:
 
 - number of penguins,
 - number of unique species on the island (see `help(unique)`),

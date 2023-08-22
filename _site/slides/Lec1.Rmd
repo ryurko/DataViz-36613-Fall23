@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "Introduction and the Grammar of Graphics"  
 author: 
   - "Professor Ron Yurko"
-date: '8/29/2022'
+date: '8/28/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,14 +28,14 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec1/"
 )
-xaringanExtra::use_scribble()
+xaringanExtra::use_clipboard()
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
@@ -50,17 +50,16 @@ style_duo_accent(
 
 *   Previously BS in Statistics @ CMU in 2015
 
-*   Research interests: statistical genetics, selective inference, clustering, sparsity, statistics in sports
-
+*   Research interests: statistics in sports / sports analytics, functional data analysis, clustering, selective inference, biostatistics, statistical genetics
 
 *   Industry experience: briefly worked in finance before returning to grad school and also as data scientist in professional sports
 ]
 
---
-
 .pull-right[
 
-![Osborn](https://www.meme-arsenal.com/memes/985cf50f0f3a6ad462d072513394e0a0.jpg)
+```{r, echo=FALSE, fig.align='center', out.width = "120%"}
+knitr::include_graphics("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ39g_SwznuMDYPPmAVsaRuhPctwPi5ST4bts0Nvn12qIofKksncq3KvY-2aktspD1aO78&usqp=CAU")
+```
 
 ]
 
@@ -70,7 +69,19 @@ name: quartet
 
 ## Do these [datasets](http://www.thefunctionalart.com/2016/08/download-datasaurus-never-trust-summary.html) have anything in common?
 
-.center[![](https://d2f99xq7vri1nk.cloudfront.net/DataDino-600x455.gif)]
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.align='center'}
+library(datasauRus)
+library(tidyverse)
+datasaurus_dozen %>%
+  filter(dataset %in% unique(datasaurus_dozen$dataset)[1:9]) %>%
+  ggplot(aes(x = x, y = y))+
+  geom_point(alpha = .75) +
+  theme_bw() +
+  theme(legend.position = "none",
+        strip.text = element_blank()) +
+  facet_wrap(~dataset, ncol = 3) 
+```
+
 
 ---
 
@@ -86,7 +97,7 @@ Need to understand the interplay between graphics and statistical inference
 
 #### Monday / Wednesday = Lecture
 
-+ Will include example code, all slides and additional `R` demos posted on https://cmu-36613.netlify.app/
++ Will include example code, all slides and additional `R` demos posted on https://cmu-36613-fall23.netlify.app/
 
 + Want class discussion - so __participate and ask questions__
 
@@ -100,14 +111,14 @@ Need to understand the interplay between graphics and statistical inference
 
 #### Two Graphics Critique / Replication of Data Viz in the Wild
 
-+ Submit two graphics critique / replications (with pseudocode) of data visualizations
++ Submit two graphics critique / replications (with fake `ggplot` code) of data visualizations
 you find in the wild (see syllabus for due dates)
 
 + Both data visualizations must be from a __recent source that was posted online within the past month__
 
 --
 
-#### Group EDA Project due Friday October 14th by 11:59 PM EST
+#### Group EDA Project due Friday October 13th by 5:00 PM EST
 
 + Each group will write an IMRD report and present their work in 36-611
 

@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="author" content="Professor Ron Yurko" />
     <script src="libs/header-attrs/header-attrs.js"></script>
-    <script src="libs/fabric/fabric.min.js"></script>
-    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
-    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -25,7 +25,7 @@ class: center, middle, inverse, title-slide
 ### Professor Ron Yurko
 ]
 .date[
-### 8/29/2022
+### 8/28/2023
 ]
 
 ---
@@ -45,17 +45,14 @@ class: center, middle, inverse, title-slide
 
 *   Previously BS in Statistics @ CMU in 2015
 
-*   Research interests: statistical genetics, selective inference, clustering, sparsity, statistics in sports
-
+*   Research interests: statistics in sports / sports analytics, functional data analysis, clustering, selective inference, biostatistics, statistical genetics
 
 *   Industry experience: briefly worked in finance before returning to grad school and also as data scientist in professional sports
 ]
 
---
-
 .pull-right[
 
-![Osborn](https://www.meme-arsenal.com/memes/985cf50f0f3a6ad462d072513394e0a0.jpg)
+&lt;img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ39g_SwznuMDYPPmAVsaRuhPctwPi5ST4bts0Nvn12qIofKksncq3KvY-2aktspD1aO78&amp;usqp=CAU" width="120%" style="display: block; margin: auto;" /&gt;
 
 ]
 
@@ -65,7 +62,8 @@ name: quartet
 
 ## Do these [datasets](http://www.thefunctionalart.com/2016/08/download-datasaurus-never-trust-summary.html) have anything in common?
 
-.center[![](https://d2f99xq7vri1nk.cloudfront.net/DataDino-600x455.gif)]
+&lt;img src="figs/Lec1/unnamed-chunk-2-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
 
 ---
 
@@ -81,7 +79,7 @@ Need to understand the interplay between graphics and statistical inference
 
 #### Monday / Wednesday = Lecture
 
-+ Will include example code, all slides and additional `R` demos posted on https://cmu-36613.netlify.app/
++ Will include example code, all slides and additional `R` demos posted on https://cmu-36613-fall23.netlify.app/
 
 + Want class discussion - so __participate and ask questions__
 
@@ -95,14 +93,14 @@ Need to understand the interplay between graphics and statistical inference
 
 #### Two Graphics Critique / Replication of Data Viz in the Wild
 
-+ Submit two graphics critique / replications (with pseudocode) of data visualizations
++ Submit two graphics critique / replications (with fake `ggplot` code) of data visualizations
 you find in the wild (see syllabus for due dates)
 
 + Both data visualizations must be from a __recent source that was posted online within the past month__
 
 --
 
-#### Group EDA Project due Friday October 14th by 11:59 PM EST
+#### Group EDA Project due Friday October 13th by 5:00 PM EST
 
 + Each group will write an IMRD report and present their work in 36-611
 
@@ -135,13 +133,14 @@ Data are often stored in __tabular__ (or matrix) form:
 
 ```
 ## # A tibble: 5 × 8
-##   species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g sex     year
-##   &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;       &lt;int&gt; &lt;fct&gt;  &lt;int&gt;
-## 1 Adelie  Torgersen           39.1          18.7               181        3750 male    2007
-## 2 Adelie  Torgersen           39.5          17.4               186        3800 female  2007
-## 3 Adelie  Torgersen           40.3          18                 195        3250 female  2007
-## 4 Adelie  Torgersen           NA            NA                  NA          NA &lt;NA&gt;    2007
-## 5 Adelie  Torgersen           36.7          19.3               193        3450 female  2007
+##   species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g
+##   &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;       &lt;int&gt;
+## 1 Adelie  Torgersen           39.1          18.7               181        3750
+## 2 Adelie  Torgersen           39.5          17.4               186        3800
+## 3 Adelie  Torgersen           40.3          18                 195        3250
+## 4 Adelie  Torgersen           NA            NA                  NA          NA
+## 5 Adelie  Torgersen           36.7          19.3               193        3450
+## # ℹ 2 more variables: sex &lt;fct&gt;, year &lt;int&gt;
 ```
 
 --
@@ -248,7 +247,7 @@ Or equivalently using `%&gt;%`:
 
 __Nothing is displayed__
 
-&lt;img src="figs/Lec1/unnamed-chunk-3-1.png" width="100%" /&gt;
+&lt;img src="figs/Lec1/unnamed-chunk-5-1.png" width="100%" /&gt;
 
 ]
 
@@ -290,7 +289,7 @@ penguins %&gt;%
 
 __And now we have a scatterplot!__
 
-&lt;img src="figs/Lec1/unnamed-chunk-5-1.png" width="100%" /&gt;
+&lt;img src="figs/Lec1/unnamed-chunk-7-1.png" width="100%" /&gt;
 
 ]
 
@@ -331,7 +330,7 @@ penguins %&gt;%
 
 __You will be covering more basics in HW1__
 
-&lt;img src="figs/Lec1/unnamed-chunk-6-1.png" width="100%" /&gt;
+&lt;img src="figs/Lec1/unnamed-chunk-8-1.png" width="100%" /&gt;
 
 ]
 

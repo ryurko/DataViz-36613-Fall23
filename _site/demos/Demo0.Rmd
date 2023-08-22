@@ -41,7 +41,7 @@ Unfortunately, there are many `R` packages that are not currently installed on y
 
 `install.packages("tidyverse")`
 
-For many of you, this should work with no errors; for those of you who do get an error, we provide further instructions below that may help. If you are able to successfully install the `tidyverse` library, the following line of code should run within the .Rmd file (just delete the hastag # and then try to Knit your .Rmd file):
+For many of you, this should work with no errors; for those of you who do get an error, we provide further instructions below that may help. If you are able to successfully install the `tidyverse` library, then the following line of code should run within the .Rmd file. __Delete the hashtag # in code chunk below and then try to Knit your .Rmd file__:
 
 ```{r}
 # library(tidyverse)
@@ -49,7 +49,7 @@ For many of you, this should work with no errors; for those of you who do get an
 
 **Important Note**: NEVER install new packages in a code block in an .Rmd file. Always install new packages at the command line / Console. That is, the `install.packages()` function should NEVER be in your submitted code. The `library()` function, however, should be in most of your submitted code: The `library()` function loads packages only after they are installed.
 
-If you're able to successfully run the above line of code, __you can skip__ to the "Posting to Gradescope" section. If you were NOT able to successfully install the `tidyverse` using the `install.packages()` function, then skip ahead to the section "Further Steps for Installing Packages".
+If you're able to successfully run the above line of code, __you can skip__ to the "Posting to Gradescope" section. If you were NOT able to successfully install the `tidyverse` using the `install.packages()` function, then __post your problem on Piazza__. Optionally, you can skip ahead to the section "Further Steps for Installing Packages".
 
 
 # Posting to Gradescope
@@ -61,6 +61,11 @@ If you were able to successfully knit your .Rmd file with the `tidyverse` librar
 **Note that your HTML file is in the same place where your .Rmd file is. So, look for where you downloaded this .Rmd file on your computer.**
 
 All of the following material is just "bonus material" for those curious about how to format RStudio and RMarkdown files.
+
+# OPTIONAL: Knit to PDF with TinyTex
+
+Because LaTeX may pose problems for you when installing, it is recommended for you to use the [TinyTex](https://bookdown.org/yihui/rmarkdown-cookbook/install-latex.html) version instead. You can install TinyTex within RStudio by first installing the [`tinytex`](https://yihui.org/tinytex/) package if you do not have it installed already. And then proceed to follow the instructions [available here](https://bookdown.org/yihui/rmarkdown-cookbook/install-latex.html). Make sure to restart RStudio after you follow these instructions before proceeding to knit to PDF.
+
 
 # OPTIONAL: Further Steps for Installing Packages
 
