@@ -1,7 +1,9 @@
 ---
 title: "Installing R and RStudio"
 author: "Professor Ron Yurko"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # Installing R and RStudio
@@ -109,9 +111,9 @@ Now (still within the RStudio / Preferences menu), click Appearance and choose a
 + Under Preferences / Packages, you can opt to change your CRAN mirror to the "Global (CDN) - RStudio" option, as it is very reliable.
 + Under Preferences / Git / SVN, you can configure your version control preferences. People often recommend using Git with RStudio for version control purposes. The interface is easy to use even if you're a beginner programmer or Git user. [This link](https://support.rstudio.com/hc/en-us/articles/200532077-Version-Control-with-Git-and-SVN) and [this link](https://jennybc.github.io/2014-05-12-ubc/ubc-r/session03_git.html) have more information on this, if you're interested.
 
-# OPTIONAL: `R` Primers on RStudio Cloud
+# OPTIONAL: `R` Primers on Posit Cloud
 
-If you are struggling to install `R` and Rstudio on your computer, and/or having difficulties with installing the `tidyverse` then you __should make a free RStudio Cloud account at [`https://rstudio.cloud/`](https://rstudio.cloud/).__ This is a free, browser-based version of `R` and RStudio that also provides access to a growing number of `R` tutorials / primers relevant to this course. 
+If you are struggling to install `R` and Rstudio on your computer, and/or having difficulties with installing the `tidyverse` then you __should make a free Posit Cloud account at [`https://posit.cloud/`](https://posit.cloud/).__ This is a free, browser-based version of `R` and RStudio that also provides access to a growing number of `R` tutorials / primers relevant to this course. 
 
-After you create a RStudio Cloud account, click on the navigation menu by "Your Workspace". Then click on ["Primers"](https://rstudio.cloud/learn/primers) to bring up a menu of tutorials, with code primers you can choose to work through. RStudio Cloud is a great practical alternative to use __in case we are unable to resolve errors with regards to installation on your own personal computer__ (an unlikely scenario). We strongly encourage you to use an installed version of `R` and RStudio throughout the course, due to RStudio Cloud data limitations that are important for your projects at the end of the semester.
+After you create a Posit Cloud account, click on the navigation menu by "Your Workspace". Then click on ["Primers"](https://posit.cloud/learn/primers) to bring up a menu of tutorials, with code primers you can choose to work through. Posit Cloud is a great practical alternative to use __in case we are unable to resolve errors with regards to installation on your own personal computer__ (an unlikely scenario). We strongly encourage you to use an installed version of `R` and RStudio throughout the course, due to Posit Cloud data limitations that are important for your projects at the end of the semester.
 
