@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "2D Categorical Data"  
 author: 
   - "Professor Ron Yurko"
-date: '9/7/2022'
+date: '9/6/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec3/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -36,7 +35,7 @@ xaringanExtra::use_clipboard()
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
@@ -365,24 +364,18 @@ $$r_{ij} = \frac{O_{ij} - E_{ij}}{\sqrt{E_{ij}}}$$
 
 - Very positive $r_{ij} \rightarrow$ more than expected, while very negative $r_{ij} \rightarrow$ fewer than expected
 
-- Mosaic plots: Color by Pearson residuals to tell us which combos are much bigger/smaller than expected.
+- Mosaic plots: __Color by Pearson residuals__ to tell us which combos are much bigger/smaller than expected.
 
 ---
 
-## Shade by _Pearson residuals_
-
-```{r mosaic-shade, fig.align='center'}
+```{r mosaic-shade, fig.align='center', fig.height=5}
 mosaicplot(table(penguins$species, penguins$island), shade = TRUE) #<<
 ```
 
 
-__These variables are clearly NOT independent!__
-
 ---
 
-## What about two variables that are independent?
-
-```{r mosaic-shade-sex, fig.align='center'}
+```{r mosaic-shade-sex, fig.align='center', fig.height=5}
 mosaicplot(table(penguins$island, penguins$sex), shade = TRUE,
            # Change the plot title
            main = "Distribution of penguins' sex does not vary across islands")  #<<
@@ -427,7 +420,7 @@ penguins %>%
 
 - Use the [`treemapify` package](https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html)
 
-- Do NOT require the same categorical levels across subgroups
+- Does NOT require the same categorical levels across subgroups
 
 
 ]
@@ -437,7 +430,7 @@ penguins %>%
 ---
 class: center, middle
 
-# Next time: 2D categorical data
+# Next time: 1D quantitative data
 
 Reminder: __HW1 due tonight!__ HW2 posted and due next week...
 

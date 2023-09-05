@@ -25,6 +25,7 @@ Lecture slides are available below in html format, and the .Rmd files are linked
 |-----------|-----------------------------------------|-----------|-----------|
 | 1       | Introduction and the Grammar of Graphics | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec1#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec1.Rmd) |
 | 2      | 1D Categorical Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec2#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec2.Rmd) |
+| 3      | 2D Categorical Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec3#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec3.Rmd) |
 
 
 ## R Demos

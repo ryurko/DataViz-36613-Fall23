@@ -5,10 +5,6 @@
     <meta charset="utf-8" />
     <meta name="author" content="Professor Ron Yurko" />
     <script src="libs/header-attrs/header-attrs.js"></script>
-    <script src="libs/fabric/fabric.min.js"></script>
-    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
-    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
     <script src="libs/clipboard/clipboard.min.js"></script>
     <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
     <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
@@ -29,7 +25,7 @@ class: center, middle, inverse, title-slide
 ### Professor Ron Yurko
 ]
 .date[
-### 9/7/2022
+### 9/6/2023
 ]
 
 ---
@@ -384,11 +380,9 @@ __[`ggmosaic`](https://github.com/haleyjeppson/ggmosaic) has issues...__
 
 - Very positive `\(r_{ij} \rightarrow\)` more than expected, while very negative `\(r_{ij} \rightarrow\)` fewer than expected
 
-- Mosaic plots: Color by Pearson residuals to tell us which combos are much bigger/smaller than expected.
+- Mosaic plots: __Color by Pearson residuals__ to tell us which combos are much bigger/smaller than expected.
 
 ---
-
-## Shade by _Pearson residuals_
 
 
 ```r
@@ -398,11 +392,7 @@ __[`ggmosaic`](https://github.com/haleyjeppson/ggmosaic) has issues...__
 &lt;img src="figs/Lec3/mosaic-shade-1.png" width="100%" style="display: block; margin: auto;" /&gt;
 
 
-__These variables are clearly NOT independent!__
-
 ---
-
-## What about two variables that are independent?
 
 
 ```r
@@ -451,7 +441,7 @@ penguins %&gt;%
 
 - Use the [`treemapify` package](https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html)
 
-- Do NOT require the same categorical levels across subgroups
+- Does NOT require the same categorical levels across subgroups
 
 
 ]
@@ -461,7 +451,7 @@ penguins %&gt;%
 ---
 class: center, middle
 
-# Next time: 2D categorical data
+# Next time: 1D quantitative data
 
 Reminder: __HW1 due tonight!__ HW2 posted and due next week...
 
