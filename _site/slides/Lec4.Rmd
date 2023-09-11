@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "1D Quantitative Data"  
 author: 
   - "Professor Ron Yurko"
-date: '9/12/2022'
+date: '9/11/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec4/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -146,13 +145,8 @@ $$
 
 # [Do NOT rely on box plots...](https://www.autodesk.com/research/publications/same-stats-different-graphs)
 
-```{r, echo = FALSE}
-knitr::include_graphics("https://damassets.autodesk.net/content/dam/autodesk/research/publications-assets/gifs/same-stats-different-graphs/boxplots.gif")
-```
 
-Three clearly different distributions of data...
 
-#### But they all result in the exact same box plot!
 
 ---
 
@@ -166,7 +160,7 @@ e.g., $P$ (`flipper_length_mm` $= 200$) $= 0$, _why_?
 --
 Instead we use the __probability density function (PDF)__ to provide a __relative likelihood__ 
 
-- Density estimation is the focus of Wednesday's lecture 
+- Density estimation is the focus of next lecture
 
 
 --
