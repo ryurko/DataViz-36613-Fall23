@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "More 2D Quant. and Intro to High Dimensional Data"  
 author: 
   - "Professor Ron Yurko"
-date: '9/21/2022'
+date: '9/20/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -73,12 +73,12 @@ library(palmerpenguins)
 ## Visuals to focus on the joint distribution
 
 ```{r, echo = FALSE}
-ohtani_pitches <- read_csv("https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv")
+ohtani_pitches <- read_csv("https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall23/main/data/ohtani_pitches_2023.csv")
 ```
 
 .pull-left[
 
-- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall22/main/data/ohtani_pitches_2022.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
+- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall23/main/data/ohtani_pitches_2023.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
 
 ```{r ohtani-pitches, eval = FALSE}
 ohtani_pitches %>%

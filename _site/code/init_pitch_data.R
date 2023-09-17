@@ -1,11 +1,11 @@
-# PURPOSE: Grab Ohtani's pitches from 2022 season so far
+# PURPOSE: Grab Ohtani's pitches from 2023 season so far
 
 library(baseballr)
 
 # Scrape pitches thrown by Ohtani this year
 pitches_data <- 
-  statcast_search(start_date = "2022-01-01", 
-                  end_date = "2022-09-16",
+  statcast_search(start_date = "2023-01-01", 
+                  end_date = "2023-09-16",
                   playerid = 660271,
                   player_type = "pitcher") 
 
@@ -21,4 +21,4 @@ clean_pitches_data <- pitches_data %>%
 
 # Save this file:
 write_csv(clean_pitches_data, 
-          "data/ohtani_pitches_2022.csv")
+          "data/ohtani_pitches_2023.csv")
