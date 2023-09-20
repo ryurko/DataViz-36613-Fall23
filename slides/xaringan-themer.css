@@ -46,19 +46,19 @@
   --text-color: #000000;
   --header-color: #c41230;
   --background-color: #FFFFFF;
-  --link-color: #4d5051;
-  --text-bold-color: #4d5051;
+  --link-color: #0277BD;
+  --text-bold-color: #0277BD;
   --code-highlight-color: rgba(255,255,0,0.5);
   --inverse-text-color: #FFFFFF;
-  --inverse-background-color: #4d5051;
+  --inverse-background-color: #0277BD;
   --inverse-header-color: #FFFFFF;
-  --inverse-link-color: #4d5051;
+  --inverse-link-color: #0277BD;
   --title-slide-background-color: #c41230;
   --title-slide-text-color: #FFFFFF;
   --header-background-color: #c41230;
   --header-background-text-color: #FFFFFF;
   --primary: #c41230;
-  --secondary: #4d5051;
+  --secondary: #0277BD;
   --white: #FFFFFF;
   --black: #000000;
 }
@@ -101,7 +101,7 @@ h1, h2, h3 {
 }
 .remark-inline-code {
   font-size: var(--code-inline-font-size);
-  color: #4d5051;
+  color: #0277BD;
 }
 .remark-slide-number {
   color: #c41230;
@@ -177,7 +177,7 @@ img, video, iframe {
   max-width: 100%;
 }
 blockquote {
-  border-left: solid 5px #4d505180;
+  border-left: solid 5px #0277BD80;
   padding-left: 1em;
 }
 .remark-slide table {
@@ -194,7 +194,7 @@ th, td {
 .remark-slide table:not(.table-unshaded) thead,
 .remark-slide table:not(.table-unshaded) tfoot,
 .remark-slide table:not(.table-unshaded) tr:nth-child(even) {
-  background: #DBDCDC;
+  background: #CCE3F1;
 }
 table.dataTable tbody {
   background-color: var(--background-color);
@@ -204,7 +204,7 @@ table.dataTable.display tbody tr.odd {
   background-color: var(--background-color);
 }
 table.dataTable.display tbody tr.even {
-  background-color: #DBDCDC;
+  background-color: #CCE3F1;
 }
 table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.5);

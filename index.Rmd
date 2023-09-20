@@ -29,6 +29,7 @@ Lecture slides are available below in html format, and the .Rmd files are linked
 | 4      | 1D Quantitative Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec4#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec4.Rmd) |
 | 5      | Density Estimation | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec5#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec5.Rmd) |
 | 6      | 2D Quantitative Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec6#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec6.Rmd) |
+| 7      | More 2D Quant. and Intro to High Dim. Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec7#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec7.Rmd) |
 
 
 ## R Demos

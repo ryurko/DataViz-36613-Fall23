@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec7/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -36,7 +35,7 @@ xaringanExtra::use_clipboard()
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
@@ -48,42 +47,22 @@ library(palmerpenguins)
 ```
 
 
-## 2D quantitative data
-
-- We're working with two variables: $(X, Y) \in \mathbb{R}^2$, i.e., dataset with $n$ rows and 2 columns
-
-- Goals:
-
-  - describing the relationships between two variables
-  
-  - describing the conditional distribution $Y | X$ via regression analysis
-  
-  - __TODAY: describing the joint distribution $X,Y$ via contours, heatmaps, etc.__
-
-- Few big picture ideas to keep in mind:
-
-  - scatterplots are by far the most common visual
-  
-  - regression analysis is by far the most popular analysis (you have a whole class on this...)
-  
-  - relationships may vary across other variables, e.g., categorical variables
-  
----
 
 ## Visuals to focus on the joint distribution
 
 ```{r, echo = FALSE}
-ohtani_pitches <- read_csv("https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall23/main/data/ohtani_pitches_2023.csv")
+lebron_shots <- read_csv("https://raw.githubusercontent.com/ryurko/Spring23-36315-Data/main/lebron_shots.csv")
 ```
 
 .pull-left[
 
-- Example [dataset of pitches](https://raw.githubusercontent.com/ryurko/DataViz-36613-Fall23/main/data/ohtani_pitches_2023.csv) thrown by baseball superstar [Shohei Ohtani](https://www.baseball-reference.com/players/o/ohtansh01.shtml)
+- Example [dataset of LeBron James' shots this NBA season](https://raw.githubusercontent.com/ryurko/Spring23-36315-Data/main/lebron_shots.csv) accessed using [`hoopR`](https://hoopr.sportsdataverse.org/)
 
-```{r ohtani-pitches, eval = FALSE}
-ohtani_pitches %>%
-  ggplot(aes(x = plate_x, y = plate_z)) +
-  geom_point(alpha = 0.2) +
+```{r lebron-shots, eval = FALSE}
+lebron_shots %>%
+  ggplot(aes(x = coordinate_x, 
+             y = coordinate_y)) +
+  geom_point(alpha = 0.4) +
   coord_fixed() + #<<
   theme_bw()
 ```
@@ -97,55 +76,10 @@ ohtani_pitches %>%
 ]
 
 .pull-right[
-```{r ref.label="ohtani-pitches", echo = FALSE, fig.height=8}
+```{r ref.label="lebron-shots", echo = FALSE, fig.height=8}
 ```
 
 ]
-
----
-
-## Going from 1D to 2D density estimation
-
-In 1D: estimate density $f(x)$, assuming that $f(x)$ is _smooth_:
-
-$$
-\hat{f}(x) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K_h(x - x_i)
-$$
-
---
-
-In 2D: estimate joint density $f(x_1, x_2)$
-
-$$\hat{f}(x_1, x_2) = \frac{1}{n} \sum_{i=1}^n \frac{1}{h_1h_2} K(\frac{x_1 - x_{i1}}{h_1}) K(\frac{x_2 - x_{i2}}{h_2})$$
-
---
-
-In 1D there was one bandwidth, now __we have two bandwidths__
-
-  - $h_1$: controls smoothness as $X_1$ changes, holding $X_2$ fixed
-  - $h_2$: controls smoothness as $X_2$ changes, holding $X_1$ fixed
-
-Again Gaussian kernels are the most popular...
-
----
-
-## So how do we display densities for 2D data?
-
-```{r, echo = FALSE, out.width="60%", fig.align='center'}
-knitr::include_graphics("https://www.byclb.com/TR/Tutorials/neural_networks/Ch_4_dosyalar/image044.gif")
-```
-
-
----
-
-## How to read contour plots?
-
-Best known in topology: outlines (contours) denote levels of elevation
-
-```{r, echo = FALSE, out.width="60%", fig.align='center'}
-knitr::include_graphics("https://preview.redd.it/2rbe8s8t7re31.jpg?auto=webp&s=eed849b180dd803d394f556432df026c4cd1dae2")
-```
-
 
 ---
 
@@ -154,11 +88,12 @@ knitr::include_graphics("https://preview.redd.it/2rbe8s8t7re31.jpg?auto=webp&s=e
 .pull-left[
 
 
-```{r ohtani-pitches-contour, eval = FALSE}
-ohtani_pitches %>%
-  ggplot(aes(x = plate_x, y = plate_z)) +
-  geom_point(alpha = 0.2) +
-  geom_density2d() + #<<
+```{r lebron-contour, eval = FALSE}
+lebron_shots %>%
+  ggplot(aes(x = coordinate_x, 
+             y = coordinate_y)) +
+  geom_point(alpha = 0.4) +
+  geom_density2d(binwidth = 0.0001) + #<<
   coord_fixed() +
   theme_bw()
 ```
@@ -170,109 +105,14 @@ ohtani_pitches %>%
 ]
 
 .pull-right[
-```{r ref.label="ohtani-pitches-contour", echo = FALSE, fig.height=8}
+```{r ref.label="lebron-contour", echo = FALSE, fig.height=8}
 ```
 
 ]
 
 
----
-
-## Display 2D contour plot
-
-.pull-left[
 
 
-```{r ohtani-pitches-contour-fill, eval = FALSE}
-ohtani_pitches %>%
-  ggplot(aes(x = plate_x, y = plate_z)) +
-  stat_density2d(aes(fill = after_stat(level)), #<<
-                 geom = "polygon") + #<<
-  geom_point(alpha = 0.2) +
-  coord_fixed() +
-  scale_fill_gradient(low = "darkblue", #<<
-                      high = "darkorange") + #<<
-  theme_bw()
-```
-
-- Use `stat_density2d` for additional features
-
-- May be easier to read than nested lines with color
-
-- __Default color scale is awful!__ Always change it!
-
-
-]
-
-.pull-right[
-```{r ref.label="ohtani-pitches-contour-fill", echo = FALSE, fig.height=8}
-```
-
-]
-
----
-
-## Visualizing grid heat maps
-
-.pull-left[
-
-
-```{r ohtani-pitches-heatmap, eval = FALSE}
-ohtani_pitches %>%
-  ggplot(aes(x = plate_x, y = plate_z)) +
-  stat_density2d(aes(fill = after_stat(density)), #<<
-                 geom = "tile", #<<
-                 contour = FALSE) + #<<
-  geom_point(alpha = 0.2) +
-  coord_fixed() +
-  scale_fill_gradient(low = "white", #<<
-                      high = "red") + #<<
-  theme_bw()
-```
-
-- Divide the space into a grid and color the grid according to high/low values
-
-- Common to treat "white" as empty color
-
-]
-
-.pull-right[
-```{r ref.label="ohtani-pitches-heatmap", echo = FALSE, fig.height=8}
-```
-
-]
-
----
-
-## Alternative idea: hexagonal binning
-
-.pull-left[
-
-
-```{r ohtani-pitches-hexbin, eval = FALSE}
-ohtani_pitches %>%
-  ggplot(aes(x = plate_x, y = plate_z)) +
-  geom_hex() + #<<
-  coord_fixed() +
-  scale_fill_gradient(low = "darkblue", 
-                      high = "darkorange") + 
-  theme_bw()
-```
-
-- Can specify `binwidth` in both directions
-
-- 2D version of histogram 
-
-- _Need to install `hexbin` package_
-
-
-]
-
-.pull-right[
-```{r ref.label="ohtani-pitches-hexbin", echo = FALSE, fig.height=8}
-```
-
-]
 
 ---
 
@@ -403,11 +243,12 @@ penguins %>%
 
 ]
 
+
 ---
 
 ## What about high-dimensional data?
 
-Consider this [dataset]((https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-12-21/readme.md)) containing nutrional information about Starbucks drinks:
+Consider this [dataset]((https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-12-21/readme.md) containing nutritional information about Starbucks drinks:
 
 ```{r, warning = FALSE, message = FALSE}
 starbucks <- 
@@ -467,7 +308,7 @@ ggcorrplot(starbucks_quant_cor, #<<
 
 - Compute the correlation matrix (using quantitative variables)
 
-- Can rearrange using `hc.order = TRUE` based on clustering (next week!)
+- Can rearrange using `hc.order = TRUE` based on clustering
 
 - See Demo3 for more examples...
 
