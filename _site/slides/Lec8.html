@@ -5,10 +5,6 @@
     <meta charset="utf-8" />
     <meta name="author" content="Professor Ron Yurko" />
     <script src="libs/header-attrs/header-attrs.js"></script>
-    <script src="libs/fabric/fabric.min.js"></script>
-    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
-    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
     <script src="libs/clipboard/clipboard.min.js"></script>
     <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
     <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
@@ -29,7 +25,7 @@ class: center, middle, inverse, title-slide
 ### Professor Ron Yurko
 ]
 .date[
-### 9/26/2022
+### 9/25/2023
 ]
 
 ---
@@ -383,14 +379,14 @@ summary(starbucks_pca)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3     PC4     PC5     PC6    PC7     PC8     PC9
-## Standard deviation     2.4748 1.3074 1.0571 0.97919 0.67836 0.56399 0.4413 0.28123 0.16874
-## Proportion of Variance 0.5568 0.1554 0.1016 0.08716 0.04183 0.02892 0.0177 0.00719 0.00259
-## Cumulative Proportion  0.5568 0.7122 0.8138 0.90093 0.94276 0.97168 0.9894 0.99657 0.99916
-##                           PC10    PC11
-## Standard deviation     0.08702 0.04048
-## Proportion of Variance 0.00069 0.00015
-## Cumulative Proportion  0.99985 1.00000
+##                           PC1    PC2    PC3     PC4     PC5     PC6    PC7
+## Standard deviation     2.4748 1.3074 1.0571 0.97919 0.67836 0.56399 0.4413
+## Proportion of Variance 0.5568 0.1554 0.1016 0.08716 0.04183 0.02892 0.0177
+## Cumulative Proportion  0.5568 0.7122 0.8138 0.90093 0.94276 0.97168 0.9894
+##                            PC8     PC9    PC10    PC11
+## Standard deviation     0.28123 0.16874 0.08702 0.04048
+## Proportion of Variance 0.00719 0.00259 0.00069 0.00015
+## Cumulative Proportion  0.99657 0.99916 0.99985 1.00000
 ```
 
 ---
@@ -406,20 +402,20 @@ head(starbucks_pc_matrix)
 ```
 
 ```
-##            PC1        PC2        PC3           PC4         PC5         PC6         PC7
-## [1,] -3.766852 -1.0023657  0.2482698 -0.1521871448  0.24739830 -0.11365847 -0.02812472
-## [2,] -3.633234 -0.6946439  1.2059943 -0.3720566566  0.06052789 -0.06406410  0.05460952
-## [3,] -3.518063 -0.3981399  2.2165170 -0.5967175941 -0.13122572 -0.01937237  0.09050806
-## [4,] -3.412061 -0.1067045  3.3741594 -0.8490378243 -0.26095965 -0.00899485  0.11585507
-## [5,] -3.721426 -0.9868147 -1.0705094  0.0949330091 -0.27181508  0.17491809  0.07009414
-## [6,] -3.564899 -0.6712499 -0.7779083 -0.0003019903 -0.72054963  0.37005543  0.20236484
-##              PC8        PC9        PC10         PC11
-## [1,] 0.006489978 0.05145094 -0.06678083 -0.019741873
-## [2,] 0.021148978 0.07094211 -0.08080545 -0.023480029
-## [3,] 0.031575955 0.08901403 -0.09389227 -0.028669251
-## [4,] 0.037521689 0.11287190 -0.11582260 -0.034691142
-## [5,] 0.037736197 0.02892317 -0.03631676 -0.005775410
-## [6,] 0.068154160 0.03705252 -0.03497690 -0.002469611
+##            PC1        PC2        PC3           PC4         PC5         PC6
+## [1,] -3.766852 -1.0023657  0.2482698 -0.1521871448  0.24739830 -0.11365847
+## [2,] -3.633234 -0.6946439  1.2059943 -0.3720566566  0.06052789 -0.06406410
+## [3,] -3.518063 -0.3981399  2.2165170 -0.5967175941 -0.13122572 -0.01937237
+## [4,] -3.412061 -0.1067045  3.3741594 -0.8490378243 -0.26095965 -0.00899485
+## [5,] -3.721426 -0.9868147 -1.0705094  0.0949330091 -0.27181508  0.17491809
+## [6,] -3.564899 -0.6712499 -0.7779083 -0.0003019903 -0.72054963  0.37005543
+##              PC7         PC8        PC9        PC10         PC11
+## [1,] -0.02812472 0.006489978 0.05145094 -0.06678083 -0.019741873
+## [2,]  0.05460952 0.021148978 0.07094211 -0.08080545 -0.023480029
+## [3,]  0.09050806 0.031575955 0.08901403 -0.09389227 -0.028669251
+## [4,]  0.11585507 0.037521689 0.11287190 -0.11582260 -0.034691142
+## [5,]  0.07009414 0.037736197 0.02892317 -0.03631676 -0.005775410
+## [6,]  0.20236484 0.068154160 0.03705252 -0.03497690 -0.002469611
 ```
 
 Columns are uncorrelated, such that Var( `\(Z_1\)` ) `\(&gt;\)` Var( `\(Z_2\)` ) `\(&gt; \dots &gt;\)` Var( `\(Z_p\)` ) - can start with a scatterplot of `\(Z_1, Z_2\)`
@@ -503,14 +499,14 @@ summary(starbucks_pca)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3     PC4     PC5     PC6    PC7     PC8     PC9
-## Standard deviation     2.4748 1.3074 1.0571 0.97919 0.67836 0.56399 0.4413 0.28123 0.16874
-## Proportion of Variance 0.5568 0.1554 0.1016 0.08716 0.04183 0.02892 0.0177 0.00719 0.00259
-## Cumulative Proportion  0.5568 0.7122 0.8138 0.90093 0.94276 0.97168 0.9894 0.99657 0.99916
-##                           PC10    PC11
-## Standard deviation     0.08702 0.04048
-## Proportion of Variance 0.00069 0.00015
-## Cumulative Proportion  0.99985 1.00000
+##                           PC1    PC2    PC3     PC4     PC5     PC6    PC7
+## Standard deviation     2.4748 1.3074 1.0571 0.97919 0.67836 0.56399 0.4413
+## Proportion of Variance 0.5568 0.1554 0.1016 0.08716 0.04183 0.02892 0.0177
+## Cumulative Proportion  0.5568 0.7122 0.8138 0.90093 0.94276 0.97168 0.9894
+##                            PC8     PC9    PC10    PC11
+## Standard deviation     0.28123 0.16874 0.08702 0.04048
+## Proportion of Variance 0.00719 0.00259 0.00069 0.00015
+## Cumulative Proportion  0.99657 0.99916 0.99985 1.00000
 ```
 
 ---
@@ -542,7 +538,7 @@ class: center, middle
 
 # Next time: More High-Dimensional Data and Shiny
 
-Reminder: __HW4 due Wednesday!__ 
+Reminder: __HW4 due Thursday!__ 
 
 Recommended reading: 
 

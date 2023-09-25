@@ -30,6 +30,7 @@ Lecture slides are available below in html format, and the .Rmd files are linked
 | 5      | Density Estimation | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec5#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec5.Rmd) |
 | 6      | 2D Quantitative Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec6#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec6.Rmd) |
 | 7      | More 2D Quant. and Intro to High Dim. Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec7#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec7.Rmd) |
+| 8      | High Dimensional Data | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec8#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec8.Rmd) |
 
 
 ## R Demos
@@ -42,6 +43,8 @@ Additional `R` demos are available below in html format.
 | 1       | Into the tidyverse | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo1.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo1.Rmd) |
 | 2       | Scatterplots and regression	 | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo2.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo2.Rmd) |
 | 3       | Pairs plots, correlograms, and parallel coordinates		 | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo3.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo3.Rmd) |
+| 4       | Multi-Dimensional Scaling	 | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo4.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo4.Rmd) |
+| 5       | Principal Component Analysis	 | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo5.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo5.Rmd) |
 
 
 ## Resources

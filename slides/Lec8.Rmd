@@ -3,7 +3,7 @@ title: "36-613: Data Visualization"
 subtitle: "High Dimensional Data"  
 author: 
   - "Professor Ron Yurko"
-date: '9/26/2022'
+date: '9/25/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec8/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -36,7 +35,7 @@ xaringanExtra::use_clipboard()
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
@@ -626,7 +625,7 @@ class: center, middle
 
 # Next time: More High-Dimensional Data and Shiny
 
-Reminder: __HW4 due Wednesday!__ 
+Reminder: __HW4 due Thursday!__ 
 
 Recommended reading: 
 
