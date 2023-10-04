@@ -19,7 +19,7 @@ Beatles <- babynames %>%
 shinyServer(
     function(input, output) {
         # Create the plot based on the input
-        output$plot <- renderPlot({
+        output$beatles_plot <- renderPlot({
             Beatles %>%
                 filter(year >= input$startyear, 
                        year <= input$endyear,

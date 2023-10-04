@@ -1,10 +1,10 @@
 ---
-title: "Visualizing Text Data"
+title: "Visualizing Areal Data"
 author: "Professor Ron Yurko"
 output: html_document
 ---
-
-# Tidy Text Data and Sentiment Analysis
+  
+# Visualization and inference for areal data
   
 ***
 
@@ -12,299 +12,291 @@ output: html_document
 
 ***
 
-# The Office Dinner Party script
+#  Visualizing Areal Data Using Spatial Polygons
+  
+What is a polygon? I know this is getting back to elementary school stuff, but in short, a polygon is a shape consisting of a finite number of edges to form an enclosed space. Geographic borders making up regions like countries, states, counties, etc., can be envisioned as very complex polygons.
 
-In this demo we'll work with the script from the best episode of ['The Office': Season 4, Episode 13 - 'Dinner Party'](https://en.wikipedia.org/wiki/Dinner_Party_(The_Office)). We can access the script using the [`schrute` package (yes this is a real thing)](https://cran.r-project.org/web/packages/schrute/vignettes/theoffice.html):
+##  Plotting spatial objects with `geom_polygon()`
+  
+In `ggplot()`, polygons are just another geometry, making it really easy to add geographic shapes (e.g. corresponding to countries, states, counties, etc.) to maps. The following code makes a county-level map of the US by utilizing the `geom_polygon()` function. This function just needs a set of latitude and longitude coordinates and the `group` that each of these coordinates belongs to. Each `group` corresponds to a polygon, and the individual latitude and longitude coordinates (many of which will belong to the same `group`) can be "connected together" to make a polygon. For example, for the state of Michigan, there are two groups, because it consists of two different polygons. 
 
-```{r}
-# install.packages("schrute")
+```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
-library(schrute)
+library(ggmap)
+us_data <- map_data("state")
+county_data <- map_data("county")
 
-# Create a table from this package just corresponding to the Dinner Party episode:
-dinner_party_table <- theoffice %>%
-  dplyr::filter(season == 4) %>%
-  dplyr::filter(episode == 13) %>%
-  # Just select columns of interest:
-  dplyr::select(index, character, text)
+#For reference, this is what us_data looks like:
+head(us_data)
 
+us_county_map <- ggplot() + 
+  #this creates all of the counties
+  geom_polygon(aes(long, lat, group = group), fill = "darkblue", size = 4, 
+               data = county_data) + 
+  #this draws outlines for the states
+  geom_polygon(aes(long, lat, group = group), color = 'white', 
+               fill = NA, data = us_data) + 
+  theme_bw() + theme(axis.text = element_blank(), 
+                     axis.title = element_blank())
+us_county_map
 ```
 
-# TidyText processing of script
+In what follows, we'll demonstrate how you can plot state-specific data (i.e., areal data, where each subject is a state). The workflow generalizes to other regions (e.g., maybe you want to plot country-specific data, county-specific data, etc.)
 
-It's very common to access data where a single column contains a long string of text, so that you have a long string of text in each row that you have to process. For instance, with the `dinner_party_table` dataset constructed above, the `text` column contains long strings which we can see by printing out the first so many rows:
+The workflow will be as follows:
 
-```{r}
-head(dinner_party_table)
-```
++ Get state boundaries (i.e., the latitude and longitude information at the state level).
 
-There are many ways to process text, but by far the simplest is to use the [`tidytext` package which has a fantastic free online book demonstrating how to use it](http://tidytextmining.com/). Rather than working with document-term matrices directly like the [`tm` package](https://cran.r-project.org/web/packages/tm/tm.pdf), instead we'll consider a __long, tidy__ table with __one-token-per-document-per-row__. Following the definition in the [`tidytext` book](https://www.tidytextmining.com/tidytext.html#word-frequencies):
++ Get state-specific data. For example, we will use the `state.x77` dataset in the  `datasets` package, which contains information about each of the 50 United States in the 1970s. (Despite its name, none of the data is from 1977. See `help(state.x77)` for more details.)
 
-> A token is a meaningful unit of text, most often a word, that we are interested in using for further analysis, and tokenization is the process of splitting text into tokens.
++ Match the data from the the second bulletpoint to the data from the first bulletpoint (i.e., connect the state-specific data with the state boundary data).
 
-We can create this tidy dataset from our `dinner_party_table` using the `unnest_tokens()` function to break the various lines into tokens (aka tokenization). We specify what the new column will be called, `word`, given the source of the text, which is `text` here:
++ Plot the data.
 
-```{r}
-# install.packages("tidytext")
-library(tidytext)
-tidy_dinner_party_tokens <- dinner_party_table %>%
-  unnest_tokens(word, text)
-# View the first so many rows:
-head(tidy_dinner_party_tokens)
-```
-
-Each row of `tidy_dinner_party_tokens` corresponds to a single word spoken by a character (see `character` column) in the show during a single line (as reflected by the `index` column). We can see that the other columns are still in the data, but the `text` column has essentially been broken up into many rows. By default, punctuation marks are removed and all of the text is converted to lower case (which was helpful given the many lines in this episode that are in all caps!). 
-
-Before we continue to explore this dataset, we will remove stop words and perform stemming. First, we load a table of stop words from the `tidytext` package and simply filter them out from our data:
-
-```{r}
-# load stop words in the tidytext package
-data(stop_words)
-
-# Next we can use the filter function to remove all stop words:
-tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
-  filter(!(word %in% stop_words$word))
-# Alternatively, we can do this with the anti_join function:
-# tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
-#   anti_join(stop_words)
-```
-
-Next, we will use the `SnowballC` package to perform stemming:
-
-```{r}
-# install.packages("SnowballC")
-library(SnowballC)
-
-tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
-  # Create a new column stem with the wordStem function:
-  mutate(stem = wordStem(word))
-
-# View the update:
-head(tidy_dinner_party_tokens)
-```
-
-# Frequency and TF-IDF review
-
-From this dataset, we technically have everything we need to construct the wider document-term (or term-document) matrices. But in the current format, we can take advantage of the `tidyverse` syntax we're used to with `group_by()` and `summarize()` to compute quantities we're interested in the ways we want. For instance, we can compute the frequency of each `stem` across all spoken lines and characters then create a word cloud by just grabbing the appropriate columns.
-
-Word clouds are probably the most well-known way of visualizing text data. Word clouds show the most common words in a set of documents, with more common words being bigger in the word cloud. To make word clouds in `R`, you'll need the `wordcloud` library. When you look at the help documentation for the `wordcloud()` function, you'll see that there are two main arguments: `words` and `freq`, which correspond to the words in the documents and their frequencies, respectively.
-
-```{r}
-# First create a dataset counting the number of each stem across the full script
-token_summary <- tidy_dinner_party_tokens %>%
-  group_by(stem) %>%
-  # Instead of summarize we can use the count function
-  count() %>%
-  ungroup() 
-
-# Now make a wordcloud :
-library(wordcloud)
-wordcloud(words = token_summary$stem, freq = token_summary$n)
-```
-
-
-There are a few things we can do to make the word cloud a bit prettier. First, it is more typical to place the biggest words in the center of the word cloud; this can be done by setting `random.order = FALSE` within `wordcloud()`. Furthermore, in the above word cloud we see that there are a bunch of tiny terms, and usually these are thrown out; you can control how many words are plotted on your word cloud by controlling `max.words` within `wordcloud()`. For example, we set `max.words = 100`, meaning the resulting word cloud displays the 100 most frequent words. We can also change the color palette; above you can see that loading the `wordcloud` library automatically loads the `RColorBrewer` library, and you can use functions like `brewer.pal()` like I do below to set the colors of the word cloud. There are lots of arguments within the `wordcloud()` function, so I encourage you to explore this function if you're interested.
-
-```{r}
-wordcloud(words = token_summary$stem, freq = token_summary$n, 
-          random.order = FALSE, max.words = 100, 
-          colors = brewer.pal(8, "Dark2"))
-```
-
-While could treat each spoken line as a separate document (`index`), instead we can focus on a collection of documents based on the characters speaking the lines (`character`). This corresponds to grouping by `character` instead of `index`. The following creates the token/stem count summary by character:
-
-```{r}
-character_token_summary <- tidy_dinner_party_tokens %>%
-  group_by(character, stem) %>%
-  # Instead of summarize we can use the count function
-  count() %>%
-  ungroup() 
-head(character_token_summary)
-```
-
-We can easily compute and join the TF-IDF values for each `stem` treating the different characters as documents with the `bind_tf_idf()` function. All this requires is three input columns referring to words, documents, and counts. TF-IDF will down-weigh words that occur frequently across all documents and will upweigh words that uniquely occur in certain documents. In our example, these are: `stem`, `character`, `n`:
-
-```{r}
-character_token_summary <- character_token_summary %>%
-  bind_tf_idf(stem, character, n)
-head(character_token_summary)
-```
-
-Note that the `tf` column here refers to the term-frequency calculated as the number of times the character said that specific word/stem (by that character) divided by the total number of words/stems spoken by that character. The `idf` column refers to the inverse-document frequency column from lecture. 
-
-We can proceed to create a visual displaying the top 10 words/stems in terms of importance by TF-IDF for characters in the episode. For simplicity, we'll just consider the four characters with the most lines in the episode based on the following:
-
-```{r}
-sort(table(dinner_party_table$character), decreasing = TRUE)
-```
-
-The following code chunk now displays the top 10 stems sorted by TF-IDF for Michael, Jan, Jim, and Pam. We use the [`reorder_within()` function](https://juliasilge.com/blog/reorder-within/) from the `tidytext` package to make sure the bars are sorted within the facets:
-
-```{r}
-character_token_summary %>%
-  # Just grab the four characters of interest:
-  filter(character %in% c("Michael", "Jan", "Jim", "Pam")) %>%
-  # Group by character and just use the top 10 based on tf_idf with slice_max
-  group_by(character) %>%
-  slice_max(tf_idf, n = 10, with_ties = FALSE) %>%
-  ungroup() %>%
-  mutate(stem = reorder_within(stem, tf_idf, character)) %>%
-  ggplot(aes(y = tf_idf, 
-             # We use the fct_reorder to sort the bars within the facets
-             x = stem),
-         fill = "darkblue", alpha = 0.5) +
-  geom_col() +
-  coord_flip() +
-  scale_x_reordered() +
-  facet_wrap(~ character, ncol = 2, scales = "free") +
-  labs(y = "TF-IDF", x = NULL)
-```
-
-# Sentiment Analysis
-
-There are also techniques for measuring the overall "sentiment" of a document. These techniques are usually dictionary-based; for example, one can come up with a list of "positive" words and "negative" words (i.e., positive and negative dictionaries), and then count the number of positive and negative words that occur in a document. Thus, you can get an aggregate measure of how "positive" or "negative" a piece of text is. There are many different ways to define the "sentiment" of text (see the References and Resources section below); for this example, we're just going to focus on "positive" versus "negative" text.
-
-Again we're going to focus on the episode's script, and first, we're going to process the data as we did before in the previous section. However, unlike the previous section, we are *not* going to remove stop words or perform stemming - for sentiment analysis, it's important to keep individual words that may have certain types of sentiment.
-
-```{r}
-tidy_all_tokens <- dinner_party_table %>%
-  unnest_tokens(word, text)
-```
-
-Now: Which of these words are "positive" words and which of these words are "negative" words? There's a function in the `tidytext` library called `get_sentiments()`. There are many different "sentiment dictionaries" available within this function, and we're going to just focus on `get_sentiments("bing")`, which provides a bunch of words that are deemed either "positive" or "negative" in a binary fashion:
-
-```{r}
-get_sentiments("bing")
-```
-
-In what follows, we're going to join the binary sentiment assignment to the tidy token table - and only keep the words with an assignment based on the `inner_join()` function:
+First, let's get the state boundaries. (We actually did this earlier when making our US map above, but we'll do it again here for demonstration.)
 
 ```{r, message = FALSE, warning = FALSE}
-# Label each word with a positive or negative sentiment
-# (if it has one)
-tidy_sentiment_tokens <- tidy_all_tokens %>%
-  inner_join(get_sentiments("bing"))
-# View the head of this:
-head(tidy_sentiment_tokens)
+#  Get state borders from ggmap package and maps
+library(maps)
+#?map_data 
+state_borders <- map_data("state") 
+head(state_borders)
 ```
 
-So now we can see how the characters vary in terms of "positive" or "negative" words. We can simply count up the total number of "positive" and "negative" words said by each character:
+Now we'll load the state-specific dataset, `state.x77`:
 
 ```{r, message = FALSE, warning = FALSE}
-character_sentiment_summary <- tidy_sentiment_tokens %>%
-  group_by(character, sentiment) %>%
-  summarize(n_words = n()) %>%
-  ungroup()
+library(datasets)
+#Note that the state.x77 dataset looks like this:
+head(state.x77)
 ```
 
-We can then display how the characters compare with stacked bar charts indicating how many positive and negative words were said by each character (ordering the characters by the total number of assigned words):
+We'll need to do a minor amount of data manipulation to match the `state.x77` dataset to the `state_borders` dataset. First, note that `state.x77` technically doesn't have a column with the state names; instead, its `rownames` correspond to the state names. So, first we'll have to create a column with the state names. Second, the names within `state_borders` are all lowercase (see above), so we'll need to take that into account with matching the two datasets as well.
+
+The following code first grabs the rownames of the `state.x77` table, then converts `state.x77` to a `tibble` named `state_data`, and then adds that column with the state names and makes them lower case:
+
+```{r, message = FALSE, warning = FALSE}
+state_names <- rownames(state.x77)
+state_data <- as_tibble(state.x77)
+state_data <- state_data %>%
+  mutate(state = state_names) %>%
+  mutate(state = tolower(state))
+```
+
+Now we can match our two datasets using `left_join()`:
+
+```{r, message = FALSE, warning = FALSE}
+#  join state_data data to state_borders
+state_borders <- state_borders %>%
+  left_join(state_data, by = c("region" = "state"))
+#Note that we now have the information from state_data inside
+#our state_borders dataset:
+head(state_borders)
+```
+
+Finally, we can make a plot of the state-specific data (in this case we focus on the illteracy rate by state in 1970). To do this, we just specify a `fill` within the `geom_polygon()` function. It's also helpful to use the `scale_fill_gradient2()` function to denote what the colors should be for this `fill` (below, we set the `midpoint` within this function equal to the median of the variable we are plotting, which is common practice).
+
+**Important**: If you do this (set the `midpoint` equal to the median), remember that you are forcing half the regions in your map to have "high value" colors and half the regions in your map to have "low value" colors. Furthermore, when looking at maps like the ones below, you should always keep the scale in mind. For example, there seems to be a distinction between the southern and northern US: They tend to be different colors. Ultimately, though, this difference corresponds to a 1-2% difference in illiteracy rates; we would need to (ironically) read up on illiteracy rates to better understand if this is a scientifically meaningful difference.
+
+```{r, message = FALSE, warning = FALSE}
+#  Make the plot!  
+# Before running the following code, you need to have the `mapproj` package
+# install.packages("mapproj")
+#  (Change the fill variable below as you see fit)
+#  (Change the color gradient as you see fit)
+ggplot(state_borders) + 
+  geom_polygon(aes(x = long, y = lat, group = group,
+                   fill = Illiteracy), color = "black") + 
+  scale_fill_gradient2(low = "darkgreen", mid = "lightgrey", 
+                       high = "darkorchid4", midpoint = 0.95) +
+  theme_void() +
+  coord_map("polyconic") + 
+  labs(
+    title = "Spatial Distribution of Illiteracy Percent by State",
+    subtitle = "Percent of Population in State",
+    caption = "U.S. Department of Commerce, Bureau of the Census (1977)",
+    fill = "Illiteracy %"
+  ) + 
+  theme(legend.position = "bottom")
+```
+
+
+## Use `coord_map()` to specify your map projection
+
+In the above code, note that we have the line `coord_map("polyconic")`. This specifies a certain kind of map projection for our plot. We can consider other projections. For example, an old-school projection we discussed in lecture was the Mercator projection. The below map is the same map as above, but with the Mercator projection.
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(state_borders) + 
+  geom_polygon(aes(x = long, y = lat, group = group,
+                   fill = Illiteracy), color = "black") + 
+  scale_fill_gradient2(low = "darkgreen", mid = "lightgrey", 
+                       high = "darkorchid4", midpoint = 0.95) +
+  theme_void() +
+  coord_map("mercator") + 
+  labs(
+    title = "Spatial Distribution of Illiteracy Percent by State",
+    subtitle = "Percent of Population in State",
+    caption = "U.S. Department of Commerce, Bureau of the Census (1977)",
+    fill = "Illiteracy %"
+  ) + 
+  theme(legend.position = "bottom")
+```
+
+The above is kind of a callback to old material. Way back at the beginning of the semester, we learned about using `coord_cartesian()` and `coord_polar()` to specify the coordinates of our plots. The `coord_map()` function is doing something similar: It is specifying the coordinates of our map.
+
+Unfortunately, some popular projections (like the Robinson projection and the Winkel Tripel projection) are not readily available. It's a little bit annoying to get these projections working in `R`, but it can be done: See [this tutorial](https://wilkelab.org/practicalgg/articles/Winkel_tripel.html). There isn't one "right" projection, but some are better than others. We won't go into details about implementing different projections in `R`, but teams working on spatial data are encouraged to read up on projections if they feel strongly about this issue.
+
+# Statistical Analyses for Areal Data
+
+In the illiteracy map above, it seems like there is a higher illiteracy rate in the southern US than in the northern US, but is this difference significant? 
+
+## Visual Randomization Tests
+
+There is another kind of graphical test that can be conducted for areal data that is not often discussed in the literature but is very useful in practice and is a lot of fun. We call this technique "visual randomization tests" for areal data (aka permutation test).
+
+In the above graph, we want to assess if illiteracy rates tend to depend on geography. So, consider the null hypothesis that illiteracy rates *do not* depend on geography. If the null hypothesis is true, what are the chances that our map just "happened" to look like the map above?
+
+To answer this question, we will use a visual randomization test. The workflow for a visual randomization test is as follows:
+
++ Make an areal graph of outcomes (as we did above for illiteracy rates).
+
++ Shuffle the outcomes randomly a few times (e.g., 8 times). Make a new areal graph for each of these shuffles. (In short, you're taking the colors of your original graph and just shuffling them around the different geographic regions on the map.)
+
++ Plot your original map along with all of the "shuffled" graphs, and show your graphs to someone else. Tell them that one graph is the "real graph" and the rest are "random graphs." Can they tell which graph is the real graph? If so, then the graph we have is "significantly non-random" in terms of geography.
+
+Below is the code to implement this workflow for the illiteracy example. We already completed the first bulletpoint, so now we just need to do the last two bulletpoints (below).
 
 ```{r}
-character_sentiment_summary %>%
-  group_by(character) %>%
-  mutate(total_assigned_words = sum(n_words)) %>%
-  ungroup() %>%
-  # Reorder the characters by the total number of words:
-  mutate(character = fct_reorder(character, total_assigned_words)) %>%
-  # Display stacked bars
-  ggplot(aes(x = character, y = n_words, fill = sentiment)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_manual(values = c("darkred", "darkblue")) +
-  theme_bw()
-```
+# It'll be helpful to write a function that automatically makes a ggplot for us.
+# This is literally the same code we used to generate the original areal map above, but for any dataset called "state_data".
+get_state_map_illit <- function(state_data){
+  plot <- ggplot(state_data) + 
+    geom_polygon(aes(x = long, y = lat, group = group,
+                     fill = Illiteracy), color = "black") +
+    scale_fill_gradient2(low = "darkgreen", mid = "lightgrey", 
+                         high = "darkorchid4", midpoint = 0.95) +
+    theme_void() +
+    coord_map("polyconic")
+  return(plot)
+}
 
-From this, we can see the most characters seem to say more positive words than negative words (except for Angela...). But we can see how the proportions within characters appears to vary, e.g., Pam has a much higher proportion of positive words than Jim. 
+# Now we're going to permute (i.e., "shuffle") the outcomes a few times. 
+# number of randomizations/permutations/shuffles:
+n_shuffles <- 9
 
-It's also common to make word clouds of "positive" words and "negative" words, so that one can get an idea of the common words expressing "positive" or "negative" sentiment in a set of documents. Below, we separate words said by the two characters with the most dialogue in the episode, Michael and Jan, then separate out their positive and negative words to create word clouds.
+# It's helpful to store ggplot objects in lists in R.
+# We haven't talked much about lists in this class, but they
+# are quite flexible and easy to use.
+# For example, we're going to create an object called plot_list.
+# plot_list[[1]] refers to the first object in the list,
+# plot_list[[2]] refers to the second object in the list,
+# and so on.
+plot_list <- list(length = n_shuffles)
+# Will use a for loop to do this
+for(i in 1:n_shuffles){
+  #create a "randomized" dataset
+  state_borders_rand <- state_borders
+  #shuffle the outcomes
+  state_borders_rand$Illiteracy <- sample(state_borders_rand$Illiteracy)
+  #create the plot and store it
+  plot_list[[i]] = get_state_map_illit(state_borders_rand)
+}
+# Could have also do the following for those that don't like for loops... (even
+# though this is still a for loop but calling compiled code underneath)
+# plot_list <- lapply(1:nshuffles, 
+#                     function(i) {
+#                       state_borders_rand <- state_borders
+#                       # shuffle the outcomes
+#                       state_borders_rand$Illiteracy <- sample(state_borders_rand$Illiteracy)
+#                       # Return the plot 
+#                       get_state_map_illit(state_borders_rand)
+#                     })
 
-```{r, message = FALSE, warning = FALSE, fig.width=15}
 
-# First for Michael, make the positive summary:
-michael_positive_summary <- tidy_sentiment_tokens %>%
-  filter(character == "Michael", sentiment == "positive") %>%
-  group_by(word) %>%
-  count()
-# Now Michael's negative summary:
-michael_negative_summary <- tidy_sentiment_tokens %>%
-  filter(character == "Michael", sentiment == "negative") %>%
-  group_by(word) %>%
-  count()
+# pick a random entry of plot_list to be the "real" plot
+plot_list[[sample(1:n_shuffles, size = 1)]] = get_state_map_illit(state_borders)
 
-# Now make the word clouds for these two tables:
-par(mfrow = c(1,2))
-# word cloud for Michael's positive words
-wordcloud(words = michael_positive_summary$word,
-          freq = michael_positive_summary$n,
-          random.order = FALSE, color = "darkblue", 
-          min.freq = 1)
-title(main = "Michael's Positive Words")
-# word cloud for Michael's negative words
-wordcloud(words = michael_negative_summary$word,
-          freq = michael_negative_summary$n,
-          random.order = FALSE, color = "darkred", 
-          min.freq = 1)
-title(main = "Michael's Negative Words")
-
-# Next for Jan, make the positive summary:
-jan_positive_summary <- tidy_sentiment_tokens %>%
-  filter(character == "Jan", sentiment == "positive") %>%
-  group_by(word) %>%
-  count()
-# Now Jan's negative summary:
-jan_negative_summary <- tidy_sentiment_tokens %>%
-  filter(character == "Jan", sentiment == "negative") %>%
-  group_by(word) %>%
-  count()
-
-# Now make the word clouds for these two tables:
-par(mfrow = c(1,2))
-# word cloud for Jan's positive words
-wordcloud(words = jan_positive_summary$word,
-          freq = jan_positive_summary$n,
-          random.order = FALSE, color = "darkblue", 
-          min.freq = 1)
-title(main = "Jan's Positive Words")
-# word cloud for Jan's negative words
-wordcloud(words = jan_negative_summary$word,
-          freq = jan_negative_summary$n,
-          random.order = FALSE, color = "darkred", 
-          min.freq = 1)
-title(main = "Jan's Negative Words")
-
+# Plot all the plots together using the cowplot package:
+# install.packages("cowplot")
+library(cowplot)
+plot_grid(plotlist = plot_list, ncol = 3)
+# library(gridExtra)
+# grid.arrange(plot_list[[1]], plot_list[[2]], plot_list[[3]],
+#              plot_list[[4]], plot_list[[5]], plot_list[[6]],
+#              plot_list[[7]], plot_list[[8]], plot_list[[9]],
+#              nrow = 3)
 ```
 
 
-#  References and Resources
+Because it's really annoying to have all of the legends displayed together, we can use the `cowplot` package to display a single legend below each of these maps. First, we grab a legend using the `get_legend()` function:
 
-+  Use the `tidytext` package
-+  [Tidy Text Mining with R](http://tidytextmining.com/)
-+  [Supervised Machine Learning for Text Analysis in R](https://smltar.com/)
+```{r}
+# Grab the legend for just the first plot, since they are all the same
+map_legend <- get_legend(plot_list[[1]])
+```
 
-##  Sentiment Analysis
+Next, we are going to update our `plot_list` so that the legends are removed from 
+each of them. We can do this quickly using the `lapply()` function:
 
-+  See the `tidytext` package and `tidytext::get_sentiments()`
-+  See the "Tidy Text Mining in R" book for some examples!
-+  [Sentiment Analysis Chapter](http://tidytextmining.com/sentiment.html)
-+  [Sentiment Analysis of The Lord Of The Rings](https://www.r-bloggers.com/sentiment-analysis-of-the-lord-of-the-rings-with-tidytext/)
-+  [RSentiment Package](https://www.r-bloggers.com/rsentiment/)
+```{r}
+legend_free_plot_list <- 
+  lapply(1:length(plot_list),
+         function(i) plot_list[[i]] + theme(legend.position = "none"))
+```
 
-##  Word Vectors
+And finally, we will now use multiple `plot_grid` function calls to display the shuffled maps next to the legend:
 
-+  "King - Man + Woman = Queen"
-+  [text2vec package on GitHub](https://github.com/dselivanov/text2vec)
-
-##  Word Relationships
-
-+  n-grams, correlations, etc
-+  See [this chapter](http://tidytextmining.com/ngrams.html) in the Tidy Text Mining book.
-
-##  Latent Semantic Analysis
-
-+  "Analyzing relationships between a set of documents and the terms they contain by producing a set of concepts related to the documents and terms"
-+  [LSA of subreddits](https://www.r-bloggers.com/comparing-subreddits-with-latent-semantic-analysis-in-r/)
-+  The [Topic Modeling chapter](http://tidytextmining.com/topicmodeling.html) of Tidy Text Mining
-+ [Structural topic models](https://juliasilge.com/blog/sherlock-holmes-stm/)
+```{r}
+plot_grid(
+  plot_grid(plotlist = legend_free_plot_list, ncol = 3),
+  map_legend, ncol = 2,
+  # Adjust so the maps are much larger:
+  rel_widths = c(4, 1)
+)
+```
 
 
+If you can spot which plot is the real plot (**without having seen it previously!!**), then illiteracy rates are significantly non-random across geography.
+
+# Uniform size with [`statebins`](https://github.com/hrbrmstr/statebins)
+
+An alternative to state-level choropleths, we can instead make state-level bins using the  [`statebins`](https://github.com/hrbrmstr/statebins) package. 
+
+```{r}
+library(statebins)
+# Need to capitalize the first letter of the state_data data to use for this (or
+# get the abbreviations - that would work as well). We can use the str_to_title
+# function from the stringr package loaded in the tidyverse
+state_data$new_state <- str_to_title(state_data$state)
+statebins(state_data = state_data, state_col = "new_state",
+          value_col = "Illiteracy") +
+  labs(title = "Spatial Distribution of Illiteracy Percent by State") +
+  theme_statebins()
+
+```
+
+We can customize this in different ways like other `ggplot` objects:
+
+```{r}
+statebins(state_data = state_data, state_col = "new_state",
+          value_col = "Illiteracy",
+          # Use the viridis scale
+          ggplot2_scale_function = viridis::scale_fill_viridis) +
+  labs(title = "Spatial Distribution of Illiteracy Percent by State") +
+  # Move legend to right
+  theme_statebins("right")
+
+```
+
+# Additional resources
+
++ Check out the [`geofacet` package](https://cran.r-project.org/web/packages/geofacet/vignettes/geofacet.html) for arranging plot panels in a similar way to `statebins` except each bin is a plot!
+
++ The `sp` package used be a popular package to work with map data, but now it's been replaced by the [`sf` package](https://r-spatial.github.io/sf/index.html)
+
++ [Tutorial for displaying county level maps](https://socviz.co/maps.html#maps), from the [excellent data viz book](https://socviz.co/index.html#preface) that's free online. Just note that it's syntax for the `statebins` package is out of date.
+
++ [How to make cartograms](https://r-charts.com/spatial/cartogram-ggplot2/)
+
++ [Choroplethr](https://arilamstein.com/open-source/) suite of packages - my partner uses this in her finance research.
 

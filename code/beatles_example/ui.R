@@ -28,6 +28,6 @@ shinyUI(
             sort(unique(beatles_names)),
             selected = c("George", "Paul")
         ),
-        plotOutput("plot")
+        plotOutput("beatles_plot")
     )
 )

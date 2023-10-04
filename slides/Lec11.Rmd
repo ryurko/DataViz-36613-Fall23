@@ -1,9 +1,9 @@
 ---
 title: "36-613: Data Visualization"
-subtitle: "Visualizing Text Data"  
+subtitle: "Visualizing Spatial Data and Maps"  
 author: 
   - "Professor Ron Yurko"
-date: '10/5/2022'
+date: '10/4/2023'
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -28,7 +28,6 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   fig.path = "figs/Lec11/"
 )
-xaringanExtra::use_scribble()
 xaringanExtra::use_clipboard()
 ```
 
@@ -36,89 +35,361 @@ xaringanExtra::use_clipboard()
 library(xaringanthemer)
 style_duo_accent(
   primary_color = "#c41230",
-  secondary_color = "#4d5051",
+  secondary_color = "#0277BD",
   inverse_header_color = "#FFFFFF"
 )
 ```
 
-## Working with raw text data 
 
-- We'll work with script from the best episode of ['The Office': Season 4, Episode 13 - 'Dinner Party'](https://en.wikipedia.org/wiki/Dinner_Party_(The_Office))
-
-- We can access the script using the [`schrute` package (yes this is a real thing)](https://cran.r-project.org/web/packages/schrute/vignettes/theoffice.html):
-
-```{r}
+```{r, include = FALSE}
 library(tidyverse)
-library(schrute)
+airports <- read_csv("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat",
+                     col_names = c("ID", "name", "city", "country", "IATA_FAA", 
+                                   "ICAO", "lat", "lon", "altitude", "timezone", "DST"))
 
-# Create a table from this package just corresponding to the Dinner Party episode:
-dinner_party_table <- theoffice %>%
-  filter(season == 4, episode == 13) %>%
-  # Just select columns of interest:
-  dplyr::select(index, character, text)
-head(dinner_party_table)
+routes <- read_csv("https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat",
+                   col_names = c("airline", "airlineID", "sourceAirport", 
+                                 "sourceAirportID", "destinationAirport", 
+                                 "destinationAirportID", "codeshare", "stops",
+                                 "equipment"))
+
+departures <- routes %>% 
+  group_by(sourceAirportID) %>%
+  summarize(n_depart = n()) %>%
+  mutate(sourceAirportID = as.integer(sourceAirportID))
+
+arrivals <- routes %>% 
+  group_by(destinationAirportID) %>% 
+  summarize(n_arrive = n()) %>% 
+  mutate(destinationAirportID = as.integer(destinationAirportID))
+
+airports <- airports %>%
+  left_join(departures, by = c("ID" = "sourceAirportID"))
+airports <- airports %>%
+  left_join(arrivals, by = c("ID" = "destinationAirportID"))
 ```
 
----
 
-## Bag of Words representation of text
+# How should we think about spatial data?
 
-- Most common way to store text data is with a __document-term matrix__ (DTM):
+- Typically location is measured with __latitude__ / __longitude__ (2D)
 
-|            | Word 1   | Word 2   | $\dots$  | Word $J$ |
-| ---------- | -------- | -------- | -------- | -------- |
-| Document 1 | $w_{11}$ | $w_{12}$ | $\dots$  | $w_{1J}$ |
-| Document 2 | $w_{21}$ | $w_{22}$ | $\dots$  | $w_{2J}$ |
-| $\dots$    | $\dots$  | $\dots$  | $\dots$  | $\dots$  |
-| Document N | $w_{N1}$ | $w_{N2}$ | $\dots$  | $w_{NJ}$ |
+- __Latitude__: Measures North / South (the "y-axis")
 
-- $w_{ij}$: count of word $j$ in document $i$, aka _term frequencies_
-
+  - Range is $(-90^{\circ}, 90^{\circ})$
+  
+  - Measures degrees from the equator $(0^{\circ})$
+  
+  - $(-90^{\circ}, 0^{\circ})$ = southern hemisphere 
+  
+  - $(0^{\circ}, 90^{\circ})$ = northern hemisphere 
+  
 --
 
-Two additional ways to reduce number of columns:
+- __Longitude__: Measures East/West (the "x-axis")
 
-1. __Stop words__: remove extremely common words (e.g., of, the, a)
+  - Range is $(-180^{\circ}, 180^{\circ})$
+  
+  - Measures degrees from the prime meridian $(0^{\circ})$ in Greenwich, England
+  
+  - $(-180^{\circ}, 0^{\circ})$ = eastern hemisphere
+  
+  - $(0^{\circ}, 180^{\circ})$ = western hemisphere
 
-2. __Stemming__: Reduce all words to their "stem"
-
-  - For example: Reducing = reduc. Reduce = reduc. Reduces = reduc.
-
-Easy to convert text into DTM format using [`tidytext` package](https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html)
 
 ---
 
-## Tokenize text into long format
+# Latitude and Longitude
 
-- Convert raw text into long, tidy table with one-token-per-document-per-row
 
-  - A __token__ equals a unit of text - typically a word
+```{r, echo = FALSE, fig.align='center', out.width="80%"}
+knitr::include_graphics("https://c.tadst.com/gfx/1200x630/longitude-and-latitude-simple.png?1")
+```
+
+---
+
+# Map Projections
+
+- Earth is a 3D object, but maps are 2D objects
+
+- __Map projections__: Transformation of the lat / long coordinates on a sphere (the earth) to a 2D plane
   
-```{r}
-library(tidytext)
-tidy_dinner_party_tokens <- dinner_party_table %>%
-  unnest_tokens(word, text) #<<
-# View the first so many rows:
-head(tidy_dinner_party_tokens)
+- There are many different projections - each will distort the map in different ways.
+
+- The most common projections are:
+
+  - [Mercator](https://en.wikipedia.org/wiki/Mercator_projection)
+  - [Robinson](https://en.wikipedia.org/wiki/Robinson_projection)
+  - [Conic](http://www.geo.hunter.cuny.edu/~jochen/gtech201/lectures/lec6concepts/Map%20coordinate%20systems/Conic%20projections.htm#:~:text=Conic%20projections%20are%20created%20by,a%20developable%20map%20projection%20surface.)
+  - [Cylindrical](https://en.wikipedia.org/wiki/Map_projection#Cylindrical)
+  - [Planar](http://www.geo.hunter.cuny.edu/~jochen/gtech201/lectures/lec6concepts/Map%20coordinate%20systems/Planar%20projections.htm)
+  - [Interrupted projections](https://en.wikipedia.org/wiki/Interruption_(map_projection))
+
+
+---
+
+# Mercator Projection (1500s)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Mercator_projection_Square.JPG/700px-Mercator_projection_Square.JPG")
 ```
 
 
 ---
 
-## Remove stop words and apply stemming
+# Mercator Projection (Tissot indicatrix)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Mercator_with_Tissot%27s_Indicatrices_of_Distortion.svg/700px-Mercator_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+
+---
+
+# Robinson Projection (Standard from 1963-1998)
+
+```{r, echo = FALSE, fig.align='center', out.width="70%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Robinson_projection_SW.jpg/700px-Robinson_projection_SW.jpg")
+```
+
+
+---
+
+# Robinson Projection (Tissot indicatrix)
+
+
+```{r, echo = FALSE, fig.align='center', out.width="70%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Robinson_with_Tissot%27s_Indicatrices_of_Distortion.svg/700px-Robinson_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+
+---
+
+# Winkel Tripel Projection (proposed 1921, now the standard)
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Winkel_triple_projection_SW.jpg/660px-Winkel_triple_projection_SW.jpg")
+```
+
+---
+
+# Winkel Tripel Projection (Tissot indicatrix)
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Winkel_Tripel_with_Tissot%27s_Indicatrices_of_Distortion.svg/660px-Winkel_Tripel_with_Tissot%27s_Indicatrices_of_Distortion.svg.png")
+```
+
+---
+
+# And many more... (see [xkcd comic](https://xkcd.com/977/))
+
+```{r, echo = FALSE, fig.align='center', out.width="60%"}
+knitr::include_graphics("https://i.pinimg.com/originals/2d/03/cf/2d03cffa216afb23fa50fb07fc1221b1.jpg")
+```
+
+
+---
+
+## Visualizing spatial data on maps using [`ggmap`](https://cran.r-project.org/web/packages/ggmap/readme/README.html)
 
 .pull-left[
 
-- Load `stop_words` from `tidytext`
+```{r us-map, eval = FALSE}
+library(ggmap)
+# First, we'll draw a "box" around the US
+# (in terms of latitude and longitude)
+US <- c(left = -125, bottom = 10, 
+        right = -67, top = 49)
+map <- get_stamenmap(US, zoom = 5, 
+                     maptype = "toner-lite")
+
+# Visualize the basic map
+ggmap(map) #<<
+
+```
+
+- Draw map based on lat / lon coordinates
+
+- Put the box into `get_stamenmap()` to access [Stamen Maps](http://maps.stamen.com/#terrain/12/37.7706/-122.3782)
+
+- Draw the map using `ggmap()` to serve as base
+
+]
+
+.pull-right[
+```{r ref.label="us-map", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+---
+
+# Three main types of spatial data
+
+
+1. __Point Pattern Data__: lat-long coordinates where events have occurred
+
+2. __Point-Referenced data__: Latitude-longitude (lat-long) coordinates as well as one or more variables specific to those coordinates.
+
+3. __Areal Data__: Geographic regions with one or more variables associated with those regions.
+
+--
+
+- Each type is structured differently within a dataset
+
+- Each type requires a different kind of graph(s)
+
+---
+
+# Point-Pattern data
+
+- __Point Pattern Data__: lat-long coordinates where events have occurred
+
+- __Point pattern data simply records the lat-long of events__; thus, there are only two columns
+
+- Again, latitude and longitude are represented with dots, sometimes called a dot or bubble map.
+
+--
+
+- The goal is to understand how the __density__ of events varies across space
+
+- The density of the dots can also be visualized (e.g., with contours)
+
+  - __Use methods we've discussed before for visualizing 2D joint distribution__
+
+
+---
+
+# Point-Referenced data
+
+- __Point-Referenced data__: Latitude-longitude (lat-long) coordinates as well as one or more variables specific to those coordinates
+
+- Point-referenced data will have the following form:
 
 ```{r}
-data(stop_words)
-
-tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
-  filter(!(word %in% stop_words$word)) #<<
-
-head(tidy_dinner_party_tokens)
+airports %>% dplyr::select(lat, lon, altitude, n_depart, n_arrive, name) %>% slice(1:3)
 ```
+
+--
+
+- The goal is to understand how the variable(s) (e.g., `altitude`) vary across different spatial locations
+
+- Typically, the latitude and longitude are represented with dots, and the variable(s) are represented with size and/or colors
+
+---
+
+## Adding points to the map as usual
+
+.pull-left[
+
+```{r airport-points, eval = FALSE}
+ggmap(map) +
+  geom_point(data = airports, #<<
+             aes(x = lat, y = lon),
+             alpha = 0.25)
+```
+
+- Display locations of airports using `geom_point()` layer, need to specify `data` for layer
+
+- Currently viewing __point-pattern__ data 
+
+]
+
+.pull-right[
+```{r ref.label="airport-points", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+
+---
+
+## Altering points on the map (in the usual way)
+
+.pull-left[
+
+```{r airport-points-plus, eval = FALSE}
+ggmap(map) +
+  geom_point(data = airports, 
+             aes(x = lon, y = lat, 
+                 size = sqrt(n_depart), #<<
+                 color = sqrt(n_arrive)), #<<
+             alpha = .5) +
+  scale_size_area(breaks = sqrt(c(1, 5, 10, 50, 100, 500)), 
+                  labels = c(1, 5, 10, 50, 100, 500), 
+                  name = "# departures") +
+  scale_color_distiller(palette = "Spectral") +
+  labs(color = "sqrt(# arrivals)") +
+  theme(legend.position = "bottom")
+```
+
+
+- Displaying additional variables through `aes`
+
+
+]
+
+.pull-right[
+```{r ref.label="airport-points-plus", echo = FALSE, fig.height=7}
+
+```
+
+]
+
+---
+
+## Thinking about areal data
+
+- __Areal Data__: Geographic regions associated with one or more variables specific to those regions
+
+- Areal data will have the following form (example US states data from 1970s):
+
+```{r, echo = FALSE}
+library(datasets)
+state_names <- rownames(state.x77)
+state_data <- as_tibble(state.x77)
+state_data <- state_data %>%
+  mutate(state = state_names) %>%
+  mutate(state = tolower(state))
+```
+
+```{r}
+state_data %>% dplyr::slice(1:3)
+```
+
+
+--
+
+- Need to match the region with the actual geographic boundaries
+
+- Many geographic boundaries/features are stored as "shapefiles"
+
+  - i.e., complicated polygons
+  
+- Can contain the lines, points, etc. to represent any geographic feature
+
+- Shapefiles are readily available for countries, states, counties, etc.
+
+
+---
+
+## Access shapefiles using `map_data()` 
+
+.pull-left[
+
+```{r}
+library(maps)
+state_borders <- map_data("state") 
+head(state_borders)
+```
+
+- For example: `map_data("world")`, `map_data("state")`, `map_data("county")` (need to install [`maps` package](https://cran.r-project.org/web/packages/maps/maps.pdf))
+
+- Contains lat/lon coordinates to draw geographic boundaries
 
 ]
 
@@ -126,246 +397,53 @@ head(tidy_dinner_party_tokens)
 
 .pull-right[
 
-- Use [`SnowballC` package](https://cran.r-project.org/web/packages/SnowballC/SnowballC.pdf) to perform stemming
+- Typical workflow for plotting areal data (e.g., using states):
 
+  1. Get state-specific data
+  
+  2. Get state boundaries
+  
+  3. Merge state-specific data with state boundaries (using `left_join()`)
+  
 ```{r}
-library(SnowballC)
-
-tidy_dinner_party_tokens <- tidy_dinner_party_tokens %>%
-  mutate(stem = wordStem(word)) #<<
-
-head(tidy_dinner_party_tokens)
+state_plot_data <- state_borders %>%
+  left_join(state_data, #<<
+            by = c("region" = "state")) #<<
 ```
+  
+  
+  4. Plot the data
 
 ]
 
 ---
 
-## Create word cloud using term frequencies
-
-__Word Cloud__: Displays all words mentioned across documents, where more common words are larger
-
-- To do this, you must compute the _total_ word counts:
-
-$$w_{\cdot 1} = \sum_{i=1}^N w_{i1} \hspace{0.1in} \dots \hspace{0.1in} w_{\cdot J} = \sum_{i=1}^N w_{iJ}$$
-
-- Then, the size of Word $j$ is proportional to $w_{\cdot j}$
-
---
-
-Create word clouds in `R` using [`wordcloud` package](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)
-
-Takes in two main arguments to create word clouds:
-
-1. `words`: vector of unique words
-
-2. `freq`: vector of frequencies
-
-
----
-
-## Create word cloud using term frequencies
+## Create a choropleth map with `geom_polygon()`
 
 .pull-left[
 
-```{r wordcloud, eval = FALSE}
-token_summary <- tidy_dinner_party_tokens %>%
-  group_by(stem) %>%
-  count() %>%
-  ungroup() 
-
-library(wordcloud)
-wordcloud(words = token_summary$stem, #<<
-          freq = token_summary$n, #<<
-          random.order = FALSE, #<<
-          max.words = 100, 
-          colors = brewer.pal(8, "Dark2"))
-```
-
-- Set `random.order = FALSE` to place biggest words in center
-
-- Can customize to display limited # words (`max.words`)
-
-- Other options as well like `colors`
-
-]
-
-.pull-right[
-
-```{r ref.label="wordcloud", fig.width=4, echo = FALSE}
-
-```
-
-
-]
-
----
-
-## TF-IDF weighting
-
-- We saw that `michael` was the largest word, but what if I'm interested in comparing text across characters (i.e., documents)?
-
---
-
-- It’s arguably of more interest to understand which words are frequently used in one set of texts but not the other, i.e., which words are unique?
-
-- Many text analytics methods will __down-weight__ words that occur frequently across all documents
-
---
-
-- __Inverse document frequency (IDF)__: for word $j$ we compute $\text{idf}_j = \log \frac{N}{N_j}$
-
-  - where $N$ is number of documents, $N_j$ is number of documents with word $j$
-  
---
-
-- Compute __TF-IDF__ $= w_{ij} \times \text{idf}_j$
-
----
-
-## TF-IDF example with characters
-
-Compute and join TF-IDF using `bind_tf_idf()`:
-
-```{r}
-character_token_summary <- tidy_dinner_party_tokens %>%
-  group_by(character, stem) %>% #<<
-  count() %>%
-  ungroup() 
-
-character_token_summary <- character_token_summary %>%
-  bind_tf_idf(stem, character, n) #<<
-character_token_summary
-```
-
-
----
-
-## Top 10 words by TF-IDF for each character
-
-.pull-left[
-
-```{r tfidf-plot, eval = FALSE}
-character_token_summary %>%
-  filter(character %in% c("Michael", "Jan", "Jim", "Pam")) %>%
-  group_by(character) %>%
-  slice_max(tf_idf, n = 10, with_ties = FALSE) %>% #<<
-  ungroup() %>%
-  mutate(stem = reorder_within(stem, tf_idf, #<<
-                               character)) %>% #<<
-  ggplot(aes(y = tf_idf, x = stem),
-         fill = "darkblue", alpha = 0.5) +
-  geom_col() +
-  coord_flip() +
-  scale_x_reordered() +
-  facet_wrap(~ character, ncol = 2, 
-             scales = "free") + #<<
-  labs(y = "TF-IDF", x = NULL)
-```
-
-- Bars can be simpler for comparison than several word clouds, to focus on top words
-
-]
-
-.pull-right[
-```{r ref.label="tfidf-plot", echo = FALSE, fig.width=4}
-
-```
-
-]
-
----
-
-## Sentiment Analysis
-
-- The visualizations so far only look at word _frequency_ (possibly weighted with TF-IDF)
-
-  - Doesn't tell you _how_ words are used
-  
---
-
-- A common goal in text analysis is to try to understand the overall __sentiment__ or "feeling" of text, i.e., __sentiment analysis__
-
-- Typical approach:
-
-  1.  Find a sentiment dictionary (e.g., "positive" and "negative" words)
-  
-  2. Count the number of words belonging to each sentiment
-  
-  3. Using the counts, you can compute an "average sentiment" (e.g., positive counts - negative counts)
-  
---
-
-- This is called a __dictionary-based approach__
-
-- There are many sentiment dictionaries already available
-
-- The __Bing__ dictionary (named after Bing Liu) provides 6,786 words that are either "positive" or "negative"
-
----
-
-## Character sentiment analysis
-
-.pull-left[
-
-```{r}
-get_sentiments("bing")
-```
-
-
-]
-
---
-
-.pull-right[
-
-Join sentiment to token table (without stemming)
-
-```{r}
-tidy_all_tokens <- dinner_party_table %>%
-  unnest_tokens(word, text)
-
-tidy_sentiment_tokens <- tidy_all_tokens %>%
-  inner_join(get_sentiments("bing")) #<<
-
-head(tidy_sentiment_tokens)
-```
-
-
-
-]
-
----
-
-## Character sentiment analysis
-
-.pull-left[
-
-```{r sentiment-plot, eval = FALSE}
-tidy_sentiment_tokens %>%
-  group_by(character, sentiment) %>%
-  summarize(n_words = n()) %>%
-  ungroup() %>%
-  group_by(character) %>%
-  mutate(total_assigned_words = sum(n_words)) %>%
-  ungroup() %>%
-  mutate(character = 
-           fct_reorder(character, 
-                       total_assigned_words)) %>%
-  ggplot(aes(x = character, y = n_words, 
-             fill = sentiment)) + #<<
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_manual(values = c("red", "blue")) +
-  theme_bw() +
+```{r choropleth, eval = FALSE}
+state_plot_data %>%
+  ggplot() + 
+  geom_polygon(aes(x = long, y = lat, 
+                   group = group,
+                   fill = Illiteracy), 
+               color = "black") + 
+  scale_fill_gradient2(
+    low = "darkgreen",
+    mid = "lightgrey", 
+    high = "darkorchid4",
+    midpoint = 0.95) +
+  theme_void() +
+  coord_map("polyconic") + 
+  labs(fill = "Illiteracy %") + 
   theme(legend.position = "bottom")
 ```
 
 
 ]
-
 .pull-right[
-```{r ref.label = "sentiment-plot", fig.width=4, echo = FALSE}
+```{r ref.label="choropleth", fig.height=8, echo = FALSE}
 
 ```
 
@@ -373,56 +451,55 @@ tidy_sentiment_tokens %>%
 
 ---
 
-## Other functions of text
+## Uniform size with [`statebins`](https://github.com/hrbrmstr/statebins)
 
-- We've just focused on word counts - __but there are many functions of text__
+.pull-left[
 
-- For example: __number of unique words__ is often used to measure vocabulary
+```{r bin-map, eval = FALSE}
+library(statebins)
+state_data$new_state <- 
+  str_to_title(state_data$state)
+statebins(state_data = state_data, #<<
+          state_col = "new_state",
+          value_col = "Illiteracy") +
+  theme_statebins()
 
-```{r, out.width="70%", echo = FALSE, fig.align='center'}
-knitr::include_graphics("https://pbs.twimg.com/media/DxCgsrxWwAAOWO3.jpg")
 ```
+
+- Make all states equal in size
+
+- Keeps spatial arrangement but focus is on the variable of interest displayed by the color
+
+]
+
+.pull-right[
+```{r ref.label="bin-map", echo = FALSE, fig.height=8}
+
+```
+
+]
 
 ---
 
-# Main Takeaways
+## Many choices for displaying maps...
 
-- Text is arguably infinite-dimensional, and we need to (somehow) represent text with a finite number of dimensions
+```{r, echo = FALSE, fig.align='center'}
+knitr::include_graphics("https://socviz.co/assets/ch-07-election-county-share.png")
+```
 
-- Most common representation: Bag of words and term frequencies (possibly weighted by TF-IDF)
-
---
-
-- Word clouds are the most common way to visualize the most frequent
-words in a set of documents
-
-- TF-IDF weighting allows you to detect words that are uniquely used
-in certain documents
-
-- Common to plot the most "important words" of a set of documents,
-ordered by TF-IDF weights
-
---
-
-- Can also measure the "sentiment" of text with sentiment-based dictionaries
-
-- Sentiment analyses are only as relevant as the dictionaries you use
 
 ---
 class: center, middle
 
-# Next time: Dashboards
+# Next time: Trends and animations
 
-__HW5 due today! Graphics Critique / Replication #2 due Friday Oct 7th!__ 
+__HW5 and Graphics Critique / Replication #2 due Friday!__ 
 
 Recommended reading: 
 
-[Text Mining With R](https://www.tidytextmining.com/)
+[CW Chapter 15 Visualizing geospatial data](https://clauswilke.com/dataviz/geospatial-data.html)
 
-[Supervised Machine Learning for Text Analysis in R](https://smltar.com/)
-
-
-
+[KH Chapter 7 Draw Maps](https://socviz.co/maps.html#maps)
 
 
 
