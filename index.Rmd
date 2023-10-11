@@ -35,6 +35,7 @@ Lecture slides are available below in html format, and the .Rmd files are linked
 | 10      | Shiny and Visualizing Text | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec10#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec10.Rmd) |
 | 11      | Visualizing Spatial Data and Maps | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec11#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec11.Rmd) |
 | 12      | Visualizing Trends and Animations | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec12#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec12.Rmd) |
+| 13      | Extras with htmlwidgets and dashboards | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/slides/Lec13#1) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/slides/Lec13.Rmd) |
 
 
 
@@ -57,7 +58,7 @@ Additional `R` demos are available below in html format.
 | 10     | Visualizing Trends | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo10.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo10.Rmd) |
 | 11     | Animations | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo11.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo11.Rmd) |
 | 12     | Modifying Colors and Themes | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/Demo12.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/Demo12.Rmd) |
-
+| 13     | Dashboard | [`r icons::fontawesome$solid$laptop`](https://cmu-36613-fall23.netlify.app/demos/DashboardDemo.html) | [`r icons::fontawesome$brands$github`](https://github.com/ryurko/DataViz-36613-Fall23/blob/main/demos/DashboardDemo.Rmd) |
 
 
 
